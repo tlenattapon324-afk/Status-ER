@@ -4,10 +4,10 @@
 ; ============================================================
 
 #define MyAppName      "Status ER"
-#define MyAppVersion   "1.2.5"
+#define MyAppVersion   "1.3.0"
 #define MyAppPublisher "imhosxp4-byte"
 #define MyAppURL       "https://github.com/imhosxp4-byte/Status-ER"
-#define SrcDir         "C:\Users\MS-10\Desktop\Status-ER"
+#define SrcDir         RemoveBackslashUnlessRoot(SourcePath)
 
 [Setup]
 AppId={{D7684450-FFD4-42FC-91E3-1C50A684D546}
@@ -47,7 +47,8 @@ Name: "{commonappdata}\StatusER"; Permissions: users-modify
 [Files]
 
 ; Node.js runtime (bundled — ไม่ต้องใช้อินเตอร์เน็ต)
-Source: "C:\Program Files\nodejs\node.exe"; DestDir: "{app}"; Flags: ignoreversion
+; ไม่ใส่ ignoreversion — ถ้าเครื่องมี node.exe รุ่นเดียวกันติดตั้งอยู่แล้ว (จากการติดตั้งครั้งก่อน) จะข้ามการคัดลอกไฟล์นี้
+Source: "C:\Program Files\nodejs\node.exe"; DestDir: "{app}"
 
 ; Launcher scripts
 Source: "{#SrcDir}\build\launch.vbs";      DestDir: "{app}"; Flags: ignoreversion

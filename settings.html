@@ -131,10 +131,60 @@
       color:#dc2626; cursor:pointer; transition:all .15s;
     }
     .btn-del:hover { background:rgba(239,68,68,0.12); }
+
+    /* Login gate */
+    #loginGate {
+      position:fixed; inset:0; z-index:200;
+      display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,#0c2540,#1a4a70);
+      padding:20px;
+    }
+    .login-card {
+      width:100%; max-width:360px; background:#ffffff;
+      border-radius:20px; padding:32px 28px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.35);
+      text-align:center;
+    }
+    .login-input {
+      width:100%; background:#f5fafd; border:2px solid #c2dff0;
+      border-radius:12px; padding:12px 14px; margin-top:14px;
+      color:#0c2540; font-size:0.95rem; font-weight:500;
+      outline:none; transition:all .2s; box-sizing:border-box;
+    }
+    .login-input:focus { border-color:#2563eb; background:#fff;
+                          box-shadow:0 0 0 3px rgba(37,99,235,0.18); }
+    .login-btn {
+      width:100%; margin-top:18px; padding:12px;
+      border:none; border-radius:12px;
+      background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff;
+      font-weight:800; font-size:.95rem; cursor:pointer; transition:all .2s;
+    }
+    .login-btn:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(37,99,235,0.35); }
+    .login-err {
+      margin-top:12px; font-size:.82rem; font-weight:600; color:#dc2626;
+      display:none;
+    }
   </style>
 </head>
 
 <body class="min-h-screen" style="color:#1e3a5f">
+
+  <!-- ── Login Gate ───────────────────────────────────── -->
+  <div id="loginGate">
+    <div class="login-card">
+      <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center font-black text-xl mb-3"
+           style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff">🔒</div>
+      <div class="font-bold text-base" style="color:#0f2d4a">เข้าสู่หน้าตั้งค่าการเชื่อมต่อ</div>
+      <div class="text-xs mt-1" style="color:#6a95b8">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</div>
+      <input id="loginUser" type="text" class="login-input" placeholder="Username" autocomplete="off" />
+      <input id="loginPass" type="password" class="login-input" placeholder="Password" autocomplete="off" />
+      <button class="login-btn" onclick="attemptLogin()">เข้าสู่ระบบ</button>
+      <div id="loginErr" class="login-err">⚠ Username หรือ Password ไม่ถูกต้อง</div>
+    </div>
+  </div>
+
+  <!-- ── App Content ──────────────────────────────────── -->
+  <div id="appContent" style="display:none">
 
   <!-- ── Header ────────────────────────────────────────── -->
   <header class="sticky top-0 z-30 backdrop-blur border-b px-6 py-3"
@@ -314,7 +364,33 @@
 
   </main>
 
+  </div><!-- /#appContent -->
+
   <script>
+    /* ── Login gate — fixed credentials, ต้อง login ทุกครั้งที่เข้าหน้านี้ ── */
+    const LOGIN_USER = 'admin';
+    const LOGIN_PASS = 'adminer';
+
+    function attemptLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const err = document.getElementById('loginErr');
+      if (u === LOGIN_USER && p === LOGIN_PASS) {
+        document.getElementById('loginGate').style.display = 'none';
+        document.getElementById('appContent').style.display = '';
+      } else {
+        err.style.display = 'block';
+        document.getElementById('loginPass').value = '';
+        document.getElementById('loginPass').focus();
+      }
+    }
+    ['loginUser', 'loginPass'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') attemptLogin();
+      });
+    });
+    document.getElementById('loginUser').focus();
+
     let dbType = 'mysql';
 
     /* ── Apply config object to form ── */

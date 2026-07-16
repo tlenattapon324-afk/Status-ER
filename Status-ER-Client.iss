@@ -5,7 +5,7 @@
 
 #define MyAppName    "Status ER Client"
 #define MyAppVersion "1.0.0"
-#define SrcDir       "C:\Users\MS-10\Desktop\Status-ER"
+#define SrcDir       RemoveBackslashUnlessRoot(SourcePath)
 
 [Setup]
 AppId={{C8A1F2B3-D4E5-6789-ABCD-EF0123456789}
