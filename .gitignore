@@ -6,3 +6,8 @@ server.log
 *.log
 dist/
 *.exe
+
+# Android TV client — build output & signing key (never commit)
+android-tv-client/build/
+android-tv-client/dist/
+android-tv-client/keystore/
