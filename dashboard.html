@@ -529,7 +529,7 @@ let systemFonts   = [];
 
 const TRIAGE = {
   1:{ label:'L1', thName:'แดง',    enName:'Resuscitation', maxWait:0,   animCls:'anim-l1', icon:'🔴' },
-  2:{ label:'L2', thName:'ชมพู',   enName:'Emergency',     maxWait:15,  animCls:'anim-l2', icon:'<span style="color:#f472b6">●</span>' },
+  2:{ label:'L2', thName:'ชมพู',   enName:'Emergency',     maxWait:15,  animCls:'anim-l2', icon:'<span style="display:inline-block;width:.72em;height:.72em;border-radius:50%;background:#f472b6;vertical-align:-.05em"></span>' },
   3:{ label:'L3', thName:'เหลือง', enName:'Urgent',        maxWait:30,  animCls:'',        icon:'🟡' },
   4:{ label:'L4', thName:'เขียว',  enName:'Semi-Urgent',   maxWait:60,  animCls:'',        icon:'🟢' },
   5:{ label:'L5', thName:'ขาว',    enName:'Non-Urgent',    maxWait:120, animCls:'',        icon:'⬜' },
@@ -1058,8 +1058,9 @@ function updateClock() {
 
 function renderSummary() {
   const counts={1:0,2:0,3:0,4:0,5:0};
-  /* ไม่นับ leave=Y และ discharged ใน zone count */
-  patients.filter(p=>p.status!=='discharged'&&!p.isLeave).forEach(p=>counts[p.lv]++);
+  /* นับเฉพาะคนที่ยังไม่ออกจาก ER — อิงจาก er_leave_status.leave='Y' (p.isLeave) เท่านั้น
+     ไม่ใช้ p.status (ซึ่งเป็นแค่การเดาจากข้อความ status_name อาจไม่ตรงกับฟิล leave จริง) */
+  patients.filter(p=>!p.isLeave).forEach(p=>counts[p.lv]++);
   const total=Object.values(counts).reduce((a,b)=>a+b,0);
   document.getElementById('totalCount').textContent=`รวมคนไข้ ${total} ราย`;
   let html='';
