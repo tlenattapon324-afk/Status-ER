@@ -447,6 +447,29 @@
 
     <hr class="border-gray-100" />
 
+    <!-- ⑩b สีตัวอักษรในแถว -->
+    <div>
+      <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">✏ สีตัวอักษรในแถว</div>
+      <label class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50
+                    transition-colors cursor-pointer border border-transparent hover:border-gray-100">
+        <div class="flex items-center gap-3">
+          <div id="swatch-rowtext" class="w-10 h-10 rounded-xl shadow border border-white/60"
+               style="background:#ffffff"></div>
+          <div>
+            <div class="font-bold text-sm text-gray-800">สีชื่อคนไข้ / ข้อมูลในแถว</div>
+            <div class="text-xs text-gray-400">ใช้สีเดียวกันทุกโซน</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="mono text-xs text-gray-400" id="hexLabel-rowtext">#ffffff</span>
+          <input type="color" id="colorPicker-rowtext" value="#ffffff"
+                 oninput="liveRowTextColor(this.value)" />
+        </div>
+      </label>
+    </div>
+
+    <hr class="border-gray-100" />
+
     <!-- ⑨ สีโซน -->
     <div>
       <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">🎨 สีโซน</div>
@@ -483,6 +506,7 @@ const DEFAULT_COLORS         = { 1:'#ef4444', 2:'#f472b6', 3:'#facc15', 4:'#4ade
 const DEFAULT_BG             = '#080c14';
 const DEFAULT_HEADER_BG      = '#0d1b2e';
 const DEFAULT_ROW_BRIGHTNESS = 1.15;
+const DEFAULT_ROW_TEXT_COLOR = '#ffffff';
 const BG_PRESETS     = [
   { hex:'#080c14', label:'กาแล็กซี่'  },
   { hex:'#0f172a', label:'กลางคืน'    },
@@ -549,6 +573,7 @@ let LEAVE_GRACE_MS = leaveGraceMin * 60 * 1000;
 let headerFontSz   = 18;
 let dataFontSz     = 26;
 let rowBrightness  = 1.15;
+let rowTextColor  = DEFAULT_ROW_TEXT_COLOR;
 let selectedFont  = 'Segoe UI';
 let systemFonts   = [];
 
@@ -894,11 +919,12 @@ function rowZoneCss(lv, hex, r, g, b) {
   const dg  = Math.min(255, Math.round(g  * Math.min(br,1) + (255-g)  * mix));
   const db2 = Math.min(255, Math.round(b  * Math.min(br,1) + (255-b)  * mix));
   const rowHex=`rgb(${dr},${dg},${db2})`;
-  const outline=`1px 1px 0 #000,-1px 1px 0 #000,1px -1px 0 #000,-1px -1px 0 #000,0 2px 4px rgba(0,0,0,0.5)`;
+  const outlineColor = luminance(rowTextColor) > 0.5 ? '#000' : '#fff';
+  const outline=`1px 1px 0 ${outlineColor},-1px 1px 0 ${outlineColor},1px -1px 0 ${outlineColor},-1px -1px 0 ${outlineColor},0 2px 4px rgba(0,0,0,0.5)`;
   return `
     .row-l${lv} td {
       background:  ${rowHex};
-      color:       #ffffff;
+      color:       ${rowTextColor};
       text-shadow: ${outline};
       border-top:    2px solid rgba(255,255,255,0.15);
       border-bottom: 2px solid rgba(255,255,255,0.15);
@@ -915,7 +941,7 @@ function rowZoneCss(lv, hex, r, g, b) {
     .pill-l${lv} {
       background: rgba(255,255,255,0.20);
       border: 2px solid rgba(255,255,255,0.65);
-      color: #ffffff; font-weight:900; text-shadow:${outline};
+      color: ${rowTextColor}; font-weight:900; text-shadow:${outline};
     }`;
 }
 
@@ -1387,6 +1413,18 @@ function liveColor(lv,hex) {
   applyColors(); renderSummary(); renderList();
 }
 function liveBgColor(hex) { bgColor=hex; syncBgPicker(); applyColors(); renderList(); saveSettings(); }
+function liveRowTextColor(hex) {
+  rowTextColor = hex;
+  syncRowTextColorPicker();
+  applyColors(); renderSummary(); renderList(); saveSettings();
+}
+function syncRowTextColorPicker() {
+  const sw=document.getElementById('swatch-rowtext'), lb=document.getElementById('hexLabel-rowtext'),
+        pk=document.getElementById('colorPicker-rowtext');
+  if(sw) sw.style.background=rowTextColor;
+  if(lb) lb.textContent=rowTextColor;
+  if(pk) pk.value=rowTextColor;
+}
 function liveRowBrightness(val) {
   rowBrightness = parseInt(val) / 100;
   const sl=document.getElementById('rowBrightnessSlider');
@@ -1448,12 +1486,12 @@ function buildBgPicker() {
 }
 function resetColors() {
   colors={...DEFAULT_COLORS}; bgColor=DEFAULT_BG; headerBgColor=DEFAULT_HEADER_BG;
-  rowBrightness=DEFAULT_ROW_BRIGHTNESS;
+  rowBrightness=DEFAULT_ROW_BRIGHTNESS; rowTextColor=DEFAULT_ROW_TEXT_COLOR;
   for(let lv=1;lv<=5;lv++){
     const pk=document.getElementById(`colorPicker-${lv}`), lb=document.getElementById(`hexLabel-${lv}`);
     if(pk) pk.value=colors[lv]; if(lb) lb.textContent=colors[lv];
   }
-  syncBgPicker(); syncHeaderBgPicker(); syncRowBrightnessUI(); applyColors(); renderSummary(); renderList(); saveSettings();
+  syncBgPicker(); syncHeaderBgPicker(); syncRowTextColorPicker(); syncRowBrightnessUI(); applyColors(); renderSummary(); renderList(); saveSettings();
 }
 
 /* ═══════════════════════ TV MODE ═══════════════════════════════ */
@@ -1469,7 +1507,7 @@ function toggleTvMode() {
 /* ═══════════════════════ PERSISTENCE ══════════════════════════ */
 
 function currentSettingsObj() {
-  return { colors, bgColor, headerBgColor, rowBrightness, refreshSecs, maskFirst, maskLast, showSummary, maxRows, headerFontSz, dataFontSz, selectedFont, scrollSpeed: SCROLL_PX_PER_S, leaveGraceMin };
+  return { colors, bgColor, headerBgColor, rowBrightness, rowTextColor, refreshSecs, maskFirst, maskLast, showSummary, maxRows, headerFontSz, dataFontSz, selectedFont, scrollSpeed: SCROLL_PX_PER_S, leaveGraceMin };
 }
 function applySettingsObj(s) {
   if (!s) return;
@@ -1477,6 +1515,7 @@ function applySettingsObj(s) {
   if (s.bgColor)                   bgColor       = s.bgColor;
   if (s.headerBgColor)             headerBgColor = s.headerBgColor;
   if (s.rowBrightness !== undefined) rowBrightness = s.rowBrightness;
+  if (s.rowTextColor)              rowTextColor  = s.rowTextColor;
   if (s.refreshSecs   !== undefined) refreshSecs   = s.refreshSecs;
   if (s.maskFirst !== undefined || s.maskLast !== undefined) {
     if (s.maskFirst !== undefined) maskFirst = s.maskFirst;
@@ -1682,6 +1721,7 @@ function render() { initialFetch(); }
   buildColorPickers();
   syncFontUI();
   syncRowBrightnessUI();
+  syncRowTextColorPicker();
   document.getElementById('chkMaskFirst').checked = maskFirst;
   document.getElementById('chkMaskLast').checked = maskLast;
   document.getElementById('chkShowSummary').checked = showSummary;
