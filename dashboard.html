@@ -557,6 +557,9 @@ const STATUS_CONFIG = {
   wait_admit:  { label:'รอ Admit',
     dk:{ bg:'rgba(234,88,12,.60)',    fg:'#ffedd5', bd:'#fb923c' },
     lt:{ bg:'#fed7aa',                fg:'#7c2d12', bd:'#f97316' } },
+  refer:       { label:'ส่งต่อ (Refer)',
+    dk:{ bg:'rgba(13,148,136,.60)',   fg:'#ccfbf1', bd:'#2dd4bf' },
+    lt:{ bg:'#99f6e4',                fg:'#134e4a', bd:'#0d9488' } },
   discharged:  { label:'จำหน่ายกลับ',
     dk:{ bg:'rgba(21,128,61,.60)',    fg:'#bbf7d0', bd:'#4ade80' },
     lt:{ bg:'#bbf7d0',                fg:'#14532d', bd:'#16a34a' } },
@@ -610,6 +613,7 @@ function mapStatus(name) {
   if (n.includes('ติดยา')||n.includes('จ่ายยา')||n.includes('รอยา')||n.includes('รับยา')||n.includes('กำลังติด')) return 'wait_obs';
   if (n.includes('สังเกต')||n.includes('observe'))                                                  return 'wait_obs';
   if (n.includes('admit')||n.includes('รับไว้')||n.includes('นอน'))                                return 'wait_admit';
+  if (n.includes('refer')||n.includes('ส่งต่อ')||n.includes('ส่งตัว')||n.includes('รีเฟอร์'))       return 'refer';
   if (n.includes('จำหน่าย')||n.includes('กลับบ้าน')||n.includes('discharge'))                      return 'discharged';
   return 'triage';
 }
