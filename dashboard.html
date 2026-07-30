@@ -341,7 +341,7 @@
              style="width:45%"></div>
       </div>
       <div class="text-xs text-gray-400 mt-1.5 text-center italic">
-        * ใช้เมื่อ "จำนวนแถว" ตั้งเป็น อัตโนมัติ
+        แยกอิสระจาก "จำนวนแถว" — ปรับได้ทั้งสองโหมด
       </div>
     </div>
 
@@ -1051,7 +1051,8 @@ function applyFontSizes() {
   `;
 }
 
-/* ── Auto-fit: calculate font size so maxRows rows fill the visible area ── */
+/* ── Fixed rows: maxRows กำหนดแค่ "ความสูงแถว" (ผ่าน padding) — ขนาดฟอนต์
+   ใช้ dataFontSz ที่ตั้งเองเสมอ แยกอิสระจากความสูงแถว ไม่ auto-fit ทับ ── */
 function applyMaxRows() {
   if (!maxRows) { applyFontSizes(); return; }
   requestAnimationFrame(()=>{
@@ -1061,13 +1062,12 @@ function applyMaxRows() {
 
     const available = wrap.clientHeight - thead.offsetHeight;
     const rowH      = Math.max(20, Math.floor(available / maxRows));
-    const sz        = Math.max(9, Math.min(40, Math.floor(rowH / 2.6)));
-    const padV      = Math.max(3, Math.floor((rowH - sz * 1.35) / 2));
+    const padV      = Math.max(3, Math.floor((rowH - dataFontSz * 1.35) / 2));
 
     getFontStyleEl().textContent=`
       #erTable thead th { font-size:${headerFontSz}px !important; }
       #erTable tbody td {
-        font-size:${sz}px !important;
+        font-size:${dataFontSz}px !important;
         padding-top:${padV}px !important;
         padding-bottom:${padV}px !important;
       }
