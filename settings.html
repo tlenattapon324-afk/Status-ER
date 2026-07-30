@@ -726,11 +726,17 @@
     }
 
     /* ── Add leave field ── */
+    /* หมายเหตุ: ต้องใช้ .textContent กับ addFieldIcon/addFieldLabel เท่านั้น (ไม่ตั้ง
+       addBtn.innerHTML ทั้งก้อน) เพราะจะไปลบ id ของ span ทั้งสองทิ้ง ทำให้ getElementById
+       คืนค่า null ในการเรียกครั้งถัดไป (เช่นตอน checkLeaveField กด "ตรวจสอบฟิล" ซ้ำ) */
     async function addLeaveField() {
       const addBtn = document.getElementById('btnAddField');
       const desc   = document.getElementById('leaveFieldDesc');
+      const icon   = document.getElementById('addFieldIcon');
+      const label  = document.getElementById('addFieldLabel');
       addBtn.disabled = true;
-      addBtn.innerHTML = '<span class="spinner"></span> กำลังเพิ่ม...';
+      icon.textContent  = '⏳';
+      label.textContent = 'กำลังเพิ่ม...';
 
       try {
         const resp = await fetch(`${API_BASE}/api/add-leave-field`, {
@@ -746,7 +752,8 @@
         desc.textContent = '❌ ' + e.message;
         desc.style.color = '#f87171';
         addBtn.disabled = false;
-        addBtn.innerHTML = '<span>➕</span><span>เพิ่มฟิล</span>';
+        icon.textContent  = '➕';
+        label.textContent = 'เพิ่มฟิล';
       }
     }
   </script>

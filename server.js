@@ -384,7 +384,12 @@ app.post('/api/add-leave-field', async (req, res) => {
   const cfg = fillPasswordIfUnchanged(req.body || {});
   if (!cfg || !cfg.host) return res.status(400).json({ ok: false, error: 'ไม่มีข้อมูลการเชื่อมต่อ' });
 
-  const sql = `ALTER TABLE er_leave_status ADD COLUMN leave CHAR(1) DEFAULT NULL`;
+  /* "leave" เป็นคำสงวนใน MySQL/MariaDB (ใช้ในคำสั่ง LEAVE ของ stored procedure)
+     ต้อง quote ชื่อฟิลด์ด้วย backtick เสมอ ไม่งั้น syntax error */
+  const isMySQL = cfg.dbType === 'mysql';
+  const sql = isMySQL
+    ? 'ALTER TABLE er_leave_status ADD COLUMN `leave` CHAR(1) DEFAULT NULL'
+    : 'ALTER TABLE er_leave_status ADD COLUMN "leave" CHAR(1) DEFAULT NULL';
   try {
     await runQuery(cfg, sql);
     console.log('[AddField] เพิ่มฟิล leave ใน er_leave_status สำเร็จ');

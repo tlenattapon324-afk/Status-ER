@@ -1,0 +1,22 @@
+{
+  "colors": {
+    "1": "#e88d8d",
+    "2": "#f472b6",
+    "3": "#facc15",
+    "4": "#4ade80",
+    "5": "#dae4f1"
+  },
+  "bgColor": "#fafafa",
+  "headerBgColor": "#1e3a5f",
+  "rowBrightness": 1.3,
+  "refreshSecs": 0,
+  "maskFirst": false,
+  "maskLast": true,
+  "showSummary": false,
+  "maxRows": 8,
+  "headerFontSz": 21,
+  "dataFontSz": 20,
+  "selectedFont": "Segoe UI",
+  "scrollSpeed": 6,
+  "leaveGraceMin": 10
+}

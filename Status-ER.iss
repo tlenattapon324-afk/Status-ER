@@ -70,6 +70,11 @@ Source: "{#SrcDir}\config.example.json"; DestDir: "{app}"; Flags: ignoreversion
 ; หมายเหตุ: ไม่รวม config.json — เครื่องใหม่จะเปิดหน้า Settings อัตโนมัติ
 ; (ถ้าเคยติดตั้งแล้ว config.json เดิมจะยังคงอยู่ ไม่ถูกลบ)
 
+; ค่าตั้งต้นของหน้าจอ (สี/ฟอนต์/มาสก์ชื่อ ฯลฯ) — ใช้เฉพาะเครื่องที่ติดตั้งใหม่ (onlyifdoesntexist)
+; เครื่องที่เคยติดตั้ง/ปรับแต่งไว้แล้ว จะไม่ถูกเขียนทับ
+Source: "{#SrcDir}\build\user-defaults.default.json"; DestDir: "{commonappdata}\StatusER"; \
+  DestName: "user-defaults.json"; Flags: onlyifdoesntexist
+
 ; node_modules (pre-installed — offline ใช้ได้ทันที)
 Source: "{#SrcDir}\node_modules\*"; DestDir: "{app}\node_modules"; \
   Flags: ignoreversion recursesubdirs createallsubdirs
