@@ -8,6 +8,7 @@ const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
 const cors    = require('cors');
+const { execFileSync } = require('child_process');
 
 const app  = express();
 const PORT = 4000;
@@ -39,18 +40,98 @@ app.use(express.static(__dirname)); /* serve HTML files */
    HELPERS
 ══════════════════════════════════════════════ */
 
+/* ── DPAPI (Windows Data Protection API) — เข้ารหัสไฟล์ config/profiles โดยผูกกับ
+   เครื่องนี้ (LocalMachine scope) กันกรณีไฟล์ถูกคัดลอก/สำรองไปเปิดที่เครื่องอื่น ── */
+function dpapiRun(method, base64Data) {
+  const script =
+    'Add-Type -AssemblyName System.Security;' +
+    `$b=[Convert]::FromBase64String('${base64Data}');` +
+    `$r=[System.Security.Cryptography.ProtectedData]::${method}($b,$null,` +
+    '[System.Security.Cryptography.DataProtectionScope]::LocalMachine);' +
+    '[Convert]::ToBase64String($r)';
+  const out = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  if (!out) throw new Error('dpapi: empty output');
+  return out;
+}
+function dpapiEncrypt(plainText) { return dpapiRun('Protect', Buffer.from(plainText, 'utf8').toString('base64')); }
+function dpapiDecrypt(cipherB64) { return Buffer.from(dpapiRun('Unprotect', cipherB64), 'base64').toString('utf8'); }
+
+/* ── config.json — cache ในหน่วยความจำ, ถอดรหัสแค่ตอนเริ่ม server (ไม่ใช่ทุก request) ── */
+let _configCache; // undefined = ยังไม่โหลด
+function readConfigFromDisk() {
+  if (!fs.existsSync(CONFIG_FILE)) return null;
+  const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
+  try {
+    return JSON.parse(dpapiDecrypt(raw));
+  } catch {
+    /* ไฟล์เก่าที่ยังเป็น plaintext (ก่อนอัปเดตนี้) — migrate เป็นแบบเข้ารหัสอัตโนมัติ */
+    try {
+      const cfg = JSON.parse(raw);
+      writeConfigToDisk(cfg);
+      console.log('[Config] Migrated plaintext config.json -> encrypted (DPAPI)');
+      return cfg;
+    } catch { return null; }
+  }
+}
+function writeConfigToDisk(cfg) {
+  fs.writeFileSync(CONFIG_FILE, dpapiEncrypt(JSON.stringify(cfg)));
+}
 function loadConfig() {
-  try   { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); }
-  catch { return null; }
+  if (_configCache === undefined) _configCache = readConfigFromDisk();
+  return _configCache;
+}
+function saveConfig(cfg) {
+  writeConfigToDisk(cfg);
+  _configCache = cfg;
 }
 
+/* ── profiles.json — เข้ารหัส + cache แบบเดียวกับ config.json ── */
+let _profilesCache; // undefined = ยังไม่โหลด
+function readProfilesFromDisk() {
+  if (!fs.existsSync(PROFILES_FILE)) return [];
+  const raw = fs.readFileSync(PROFILES_FILE, 'utf8');
+  try {
+    return JSON.parse(dpapiDecrypt(raw));
+  } catch {
+    try {
+      const profiles = JSON.parse(raw);
+      writeProfilesToDisk(profiles);
+      console.log('[Profiles] Migrated plaintext profiles.json -> encrypted (DPAPI)');
+      return profiles;
+    } catch { return []; }
+  }
+}
+function writeProfilesToDisk(profiles) {
+  fs.writeFileSync(PROFILES_FILE, dpapiEncrypt(JSON.stringify(profiles)));
+}
 function loadProfiles() {
-  try   { return JSON.parse(fs.readFileSync(PROFILES_FILE, 'utf8')); }
-  catch { return []; }
+  if (_profilesCache === undefined) _profilesCache = readProfilesFromDisk();
+  return _profilesCache;
+}
+function saveProfiles(profiles) {
+  writeProfilesToDisk(profiles);
+  _profilesCache = profiles;
 }
 
-function saveProfiles(profiles) {
-  fs.writeFileSync(PROFILES_FILE, JSON.stringify(profiles, null, 2));
+/* ── ซ่อน password ก่อนส่งกลับให้ client (กันรั่วผ่าน network ที่ไม่ได้ auth) ── */
+function maskConfig(cfg) {
+  if (!cfg) return cfg;
+  const { password, ...rest } = cfg;
+  return { ...rest, password: '', hasPassword: !!password };
+}
+
+/* ── ถ้า client ส่ง password ว่างมา (เพราะฟอร์มถูก mask ไว้) แต่ฟิลด์อื่นตรงกับ
+   config ที่บันทึกไว้ทุกตัว ให้ใช้ password เดิมแทน — ใช้กับปุ่ม test/check/add field ── */
+function fillPasswordIfUnchanged(cfg) {
+  if (cfg.password) return cfg;
+  const saved = loadConfig();
+  if (saved && saved.dbType === cfg.dbType && saved.host === cfg.host &&
+      String(saved.port) === String(cfg.port) && saved.database === cfg.database &&
+      saved.username === cfg.username) {
+    return { ...cfg, password: saved.password };
+  }
+  return cfg;
 }
 
 /**
@@ -121,10 +202,11 @@ app.post('/api/defaults', (req, res) => {
 });
 
 /* ── GET  /api/config — return current DB config for settings pre-fill ── */
+/* password ไม่ถูกส่งกลับ (endpoint นี้ไม่ต้อง auth) — ส่งแค่ hasPassword flag แทน */
 app.get('/api/config', (req, res) => {
   const cfg = loadConfig();
   if (!cfg) return res.json({ ok: false });
-  res.json({ ok: true, config: cfg });
+  res.json({ ok: true, config: maskConfig(cfg) });
 });
 
 /* ── GET  /api/status — server health check ── */
@@ -139,10 +221,16 @@ app.get('/api/status', (req, res) => {
 });
 
 /* ── POST /api/config — save DB config to file ── */
+/* ถ้า password ว่าง (ฟอร์มถูก mask ไว้ ผู้ใช้ไม่ได้พิมพ์รหัสใหม่) ให้คงรหัสเดิมไว้ */
 app.post('/api/config', (req, res) => {
   try {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(req.body, null, 2));
-    console.log(`[Config] Saved — ${req.body.dbType} @ ${req.body.host}:${req.body.port}`);
+    const incoming = { ...req.body };
+    if (!incoming.password) {
+      const existing = loadConfig();
+      if (existing?.password) incoming.password = existing.password;
+    }
+    saveConfig(incoming);
+    console.log(`[Config] Saved — ${incoming.dbType} @ ${incoming.host}:${incoming.port}`);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
@@ -152,7 +240,7 @@ app.post('/api/config', (req, res) => {
 /* ── POST /api/test — test DB connection ── */
 app.post('/api/test', async (req, res) => {
   try {
-    const cfg = req.body;
+    const cfg = fillPasswordIfUnchanged(req.body);
     await runQuery(cfg, 'SELECT 1');
     console.log(`[Test] OK — ${cfg.dbType} @ ${cfg.host}:${cfg.port}`);
     res.json({ ok: true, message: 'เชื่อมต่อสำเร็จ' });
@@ -268,7 +356,7 @@ app.get('/api/er-leave-summary', async (req, res) => {
 /* ── POST /api/check-leave-field — ตรวจสอบว่ามีฟิล leave ใน er_leave_status ── */
 /* รับ cfg จาก request body (ค่าฟอร์มปัจจุบัน ไม่ใช่ config.json ที่บันทึกไว้) */
 app.post('/api/check-leave-field', async (req, res) => {
-  const cfg = req.body;
+  const cfg = fillPasswordIfUnchanged(req.body || {});
   if (!cfg || !cfg.host) return res.status(400).json({ ok: false, error: 'ไม่มีข้อมูลการเชื่อมต่อ' });
 
   const isMySQL = cfg.dbType === 'mysql';
@@ -293,7 +381,7 @@ app.post('/api/check-leave-field', async (req, res) => {
 /* ── POST /api/add-leave-field — เพิ่มฟิล leave CHAR(1) ใน er_leave_status ── */
 /* รับ cfg จาก request body */
 app.post('/api/add-leave-field', async (req, res) => {
-  const cfg = req.body;
+  const cfg = fillPasswordIfUnchanged(req.body || {});
   if (!cfg || !cfg.host) return res.status(400).json({ ok: false, error: 'ไม่มีข้อมูลการเชื่อมต่อ' });
 
   const sql = `ALTER TABLE er_leave_status ADD COLUMN leave CHAR(1) DEFAULT NULL`;
@@ -308,8 +396,9 @@ app.post('/api/add-leave-field', async (req, res) => {
 });
 
 /* ── GET /api/profiles — รายการ profiles ทั้งหมด ── */
+/* password ของแต่ละ profile ไม่ถูกส่งกลับ (endpoint นี้ไม่ต้อง auth) ── */
 app.get('/api/profiles', (req, res) => {
-  const profiles = loadProfiles();
+  const profiles = loadProfiles().map(maskConfig);
   const cfg      = loadConfig();
   res.json({ ok: true, profiles, activeHost: cfg?.host || null, activeDb: cfg?.database || null });
 });
@@ -322,7 +411,11 @@ app.post('/api/profiles', (req, res) => {
   const profiles = loadProfiles();
   const pid      = id || `prof_${Date.now()}`;
   const idx      = profiles.findIndex(p => p.id === pid);
-  const entry    = { id: pid, name, savedAt: new Date().toISOString(), ...dbCfg };
+
+  /* ถ้า password ว่าง (ฟอร์มถูก mask ไว้) แต่กำลังอัปเดต profile เดิม ให้คงรหัสเดิมไว้ */
+  if (!dbCfg.password && idx >= 0 && profiles[idx].password) dbCfg.password = profiles[idx].password;
+
+  const entry = { id: pid, name, savedAt: new Date().toISOString(), ...dbCfg };
 
   if (idx >= 0) profiles[idx] = entry;
   else          profiles.push(entry);
@@ -340,7 +433,7 @@ app.post('/api/profiles/:id/activate', (req, res) => {
 
   const { id, name, ...cfg } = prof;
   cfg.savedAt = new Date().toISOString();
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2));
+  saveConfig(cfg);
   console.log(`[Profiles] Activated — "${name}" (${cfg.dbType} @ ${cfg.host}:${cfg.port})`);
   res.json({ ok: true, name });
 });

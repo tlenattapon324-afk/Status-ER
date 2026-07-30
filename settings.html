@@ -403,6 +403,10 @@
       setVal('fDatabase', cfg.database || '');
       setVal('fUser',     cfg.username || '');
       setVal('fPass',     cfg.password || '');
+      const passField = document.getElementById('fPass');
+      passField.placeholder = cfg.hasPassword
+        ? '•••••••• (มีรหัสผ่านเดิมอยู่ — เว้นว่างไว้เพื่อไม่เปลี่ยน)'
+        : '••••••••';
     }
 
     /* ── Load saved settings + profiles ── */
