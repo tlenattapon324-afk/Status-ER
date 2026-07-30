@@ -261,11 +261,20 @@
       <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">👤 ชื่อผู้ป่วย</div>
       <label class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer
                     border border-transparent hover:border-gray-100 transition-colors">
-        <input type="checkbox" id="chkMaskName" onchange="setMaskName(this.checked)"
+        <input type="checkbox" id="chkMaskFirst" onchange="setMaskFirst(this.checked)"
                class="w-4 h-4 rounded accent-indigo-600 cursor-pointer" />
         <div>
-          <div class="font-bold text-sm text-gray-800">มาสก์ชื่อ-นามสกุล</div>
-          <div class="text-xs text-gray-400">ซ่อน <span class="font-mono font-bold">4 ตัวท้าย</span> ของชื่อและนามสกุล</div>
+          <div class="font-bold text-sm text-gray-800">มาสก์ชื่อ</div>
+          <div class="text-xs text-gray-400">ซ่อน <span class="font-mono font-bold">4 ตัวท้าย</span> ของชื่อ</div>
+        </div>
+      </label>
+      <label class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer
+                    border border-transparent hover:border-gray-100 transition-colors">
+        <input type="checkbox" id="chkMaskLast" onchange="setMaskLast(this.checked)"
+               class="w-4 h-4 rounded accent-indigo-600 cursor-pointer" />
+        <div>
+          <div class="font-bold text-sm text-gray-800">มาสก์นามสกุล</div>
+          <div class="text-xs text-gray-400">ซ่อน <span class="font-mono font-bold">4 ตัวท้าย</span> ของนามสกุล</div>
         </div>
       </label>
     </div>
@@ -529,7 +538,8 @@ let fetchTimer    = null;   // background data fetch interval
 let cdTimer       = null;
 let cdCount       = 30;
 let tvMode        = false;
-let maskName      = false;
+let maskFirst     = false;
+let maskLast      = false;
 let showSummary   = true;
 let maxRows       = 0;
 let pendingData   = null;   // latest fetched data, applied when scroll reaches bottom
@@ -612,12 +622,12 @@ function doLogout() {
 function maskNamePart(s) {
   return s.length > 4 ? s.slice(0, -4) + 'XXXX' : 'XXXX';
 }
-function maskLastName(name) {
-  if (!maskName || !name || name === '—') return name;
+function maskPatientName(name) {
+  if (!name || name === '—' || (!maskFirst && !maskLast)) return name;
   const parts = name.trim().split(/\s+/);
-  if (parts.length < 2) return name;
-  parts[0]                  = maskNamePart(parts[0]);
-  parts[parts.length - 1]   = maskNamePart(parts[parts.length - 1]);
+  if (parts.length < 2) return maskFirst ? maskNamePart(parts[0]) : name;
+  if (maskFirst) parts[0]                = maskNamePart(parts[0]);
+  if (maskLast)  parts[parts.length - 1] = maskNamePart(parts[parts.length - 1]);
   return parts.join(' ');
 }
 
@@ -1194,7 +1204,7 @@ function patientRow(p, delay=0) {
 
   const arr=new Date(p.arrivalTs), pad=n=>String(n).padStart(2,'0');
   const tStr=`${pad(arr.getHours())}:${pad(arr.getMinutes())}:${pad(arr.getSeconds())}`;
-  const displayName = maskLastName(p.cc);
+  const displayName = maskPatientName(p.cc);
 
   /* countdown สำหรับ leaving patients */
   let leaveBadge = '';
@@ -1320,9 +1330,15 @@ function setMaxRows(val) {
   saveSettings();
 }
 
-function setMaskName(checked) {
-  maskName=checked;
-  document.getElementById('chkMaskName').checked=checked;
+function setMaskFirst(checked) {
+  maskFirst=checked;
+  document.getElementById('chkMaskFirst').checked=checked;
+  renderList();
+  saveSettings();
+}
+function setMaskLast(checked) {
+  maskLast=checked;
+  document.getElementById('chkMaskLast').checked=checked;
   renderList();
   saveSettings();
 }
@@ -1453,7 +1469,7 @@ function toggleTvMode() {
 /* ═══════════════════════ PERSISTENCE ══════════════════════════ */
 
 function currentSettingsObj() {
-  return { colors, bgColor, headerBgColor, rowBrightness, refreshSecs, maskName, showSummary, maxRows, headerFontSz, dataFontSz, selectedFont, scrollSpeed: SCROLL_PX_PER_S, leaveGraceMin };
+  return { colors, bgColor, headerBgColor, rowBrightness, refreshSecs, maskFirst, maskLast, showSummary, maxRows, headerFontSz, dataFontSz, selectedFont, scrollSpeed: SCROLL_PX_PER_S, leaveGraceMin };
 }
 function applySettingsObj(s) {
   if (!s) return;
@@ -1462,7 +1478,14 @@ function applySettingsObj(s) {
   if (s.headerBgColor)             headerBgColor = s.headerBgColor;
   if (s.rowBrightness !== undefined) rowBrightness = s.rowBrightness;
   if (s.refreshSecs   !== undefined) refreshSecs   = s.refreshSecs;
-  if (s.maskName      !== undefined) maskName      = s.maskName;
+  if (s.maskFirst !== undefined || s.maskLast !== undefined) {
+    if (s.maskFirst !== undefined) maskFirst = s.maskFirst;
+    if (s.maskLast  !== undefined) maskLast  = s.maskLast;
+  } else if (s.maskName !== undefined) {
+    /* migrate ค่าเก่าก่อนแยกช่อง ชื่อ/นามสกุล */
+    maskFirst = s.maskName;
+    maskLast  = s.maskName;
+  }
   if (s.showSummary   !== undefined) showSummary   = s.showSummary;
   if (s.maxRows       !== undefined) maxRows       = s.maxRows;
   if (s.headerFontSz  !== undefined) headerFontSz  = s.headerFontSz;
@@ -1659,7 +1682,8 @@ function render() { initialFetch(); }
   buildColorPickers();
   syncFontUI();
   syncRowBrightnessUI();
-  document.getElementById('chkMaskName').checked = maskName;
+  document.getElementById('chkMaskFirst').checked = maskFirst;
+  document.getElementById('chkMaskLast').checked = maskLast;
   document.getElementById('chkShowSummary').checked = showSummary;
   applyShowSummary();
   if (maxRows) applyMaxRows(); else applyFontSizes();
