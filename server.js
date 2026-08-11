@@ -319,9 +319,13 @@ app.get('/api/er-leave-summary', async (req, res) => {
   if (!cfg) return res.status(503).json({ ok: false, error: 'ยังไม่ได้ตั้งค่าฐานข้อมูล' });
 
   const isMySQL = cfg.dbType === 'mysql';
+  /* หมายเหตุ: ห้ามฝัง literal ภาษาไทย (เช่น 'ไม่ระบุ') ใน SQL ตรงนี้ — บางฐาน HOSxP (MySQL)
+     เก็บข้อมูลเป็น TIS-620 ทำให้ literal ที่ฝังในคำสั่ง SQL ถูกส่ง/แปลงกลับมาผิดเพี้ยน
+     (เจอจริงกับ รพ.พิชัย — COALESCE(...,'ไม่ระบุ') กลายเป็นอักขระเพี้ยน) ใส่ค่า default
+     ให้ null ในโค้ด JS แทนหลัง query เสร็จ จะปลอดภัยกับทุก charset ของฐานข้อมูล */
   const sql = isMySQL ? `
     SELECT
-      COALESCE(el.er_leave_status_name, 'ไม่ระบุ')  AS status_name,
+      el.er_leave_status_name                         AS status_name,
       COALESCE(el.leave, '')                          AS leave_flag,
       COUNT(*)                                        AS cnt
     FROM ovst o
@@ -332,7 +336,7 @@ app.get('/api/er-leave-summary', async (req, res) => {
     ORDER BY (el.leave = 'Y') ASC, cnt DESC
   ` : `
     SELECT
-      COALESCE(el.er_leave_status_name, 'ไม่ระบุ')  AS status_name,
+      el.er_leave_status_name                         AS status_name,
       COALESCE(el.leave::text, '')                    AS leave_flag,
       COUNT(*)                                        AS cnt
     FROM ovst o
@@ -345,6 +349,7 @@ app.get('/api/er-leave-summary', async (req, res) => {
 
   try {
     const rows = await runQuery(cfg, sql);
+    rows.forEach(r => { if (r.status_name == null) r.status_name = 'ไม่ระบุ'; });
     console.log(`[Leave Summary] ${rows.length} status groups`);
     res.json({ ok: true, data: rows });
   } catch (err) {
