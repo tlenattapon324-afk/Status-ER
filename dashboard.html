@@ -244,6 +244,15 @@
       <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">⏱ เวลาดีดออกจากห้อง ER</div>
       <div class="text-xs text-gray-400 mb-3">ระยะเวลาแสดงผู้ป่วยต่อ หลังสถานะเป็น "ออกจาก ER" แล้ว</div>
       <div class="grid grid-cols-3 gap-2" id="leaveGraceOpts"></div>
+      <label class="flex items-center gap-3 p-3 mt-3 rounded-xl hover:bg-gray-50 cursor-pointer
+                    border border-transparent hover:border-gray-100 transition-colors">
+        <input type="checkbox" id="chkLeaveInstant" onchange="setLeaveInstant(this.checked)"
+               class="w-4 h-4 rounded accent-indigo-600 cursor-pointer" />
+        <div>
+          <div class="font-bold text-sm text-gray-800">ดีดออกทันทีเมื่อสถานะเป็น Y</div>
+          <div class="text-xs text-gray-400">ไม่รอเวลาด้านบน — หายจากจอทันทีที่ leave='Y'</div>
+        </div>
+      </label>
     </div>
 
     <hr class="border-gray-100" />
@@ -570,6 +579,7 @@ let pendingData   = null;   // latest fetched data, applied when scroll reaches 
 const leaveTimestamps = {}; // { patientId: timestamp เมื่อ leave='Y' ครั้งแรก }
 let leaveGraceMin = 5;                       // ตั้งค่าได้ผ่าน settings panel
 let LEAVE_GRACE_MS = leaveGraceMin * 60 * 1000;
+let leaveInstant = false;                    // true = ดีดออกทันทีเมื่อ leave='Y' ไม่รอ LEAVE_GRACE_MS
 let headerFontSz   = 18;
 let dataFontSz     = 26;
 let rowBrightness  = 1.15;
@@ -729,8 +739,8 @@ function mapApiData(rows) {
     if (!seenIds.has(id)) delete leaveTimestamps[id];
   });
 
-  /* กรอง: leave=Y เกิน 10 นาที → เอาออก */
-  return mapped.filter(p => !p.isLeave || p.leaveElapsed < LEAVE_GRACE_MS);
+  /* กรอง: leave=Y เกินเวลาที่ตั้งไว้ → เอาออก (หรือออกทันทีถ้าเปิด leaveInstant) */
+  return mapped.filter(p => !p.isLeave || (!leaveInstant && p.leaveElapsed < LEAVE_GRACE_MS));
 }
 
 /* ── Initial fetch — apply immediately, reset scroll, start cycles ── */
@@ -1324,11 +1334,26 @@ function buildLeaveGraceOpts() {
   document.getElementById('leaveGraceOpts').innerHTML=LEAVE_GRACE_OPTS.map(o=>`
     <button class="ropt ${o.val===leaveGraceMin?'active':''}" data-val="${o.val}"
             onclick="setLeaveGrace(${o.val})">${o.label}</button>`).join('');
+  syncLeaveInstantUI();
 }
 function setLeaveGrace(val) {
   leaveGraceMin = val;
   LEAVE_GRACE_MS = leaveGraceMin * 60 * 1000;
   document.querySelectorAll('#leaveGraceOpts .ropt').forEach(el=>el.classList.toggle('active',+el.dataset.val===val));
+  renderList();
+  saveSettings();
+}
+function syncLeaveInstantUI() {
+  const grid = document.getElementById('leaveGraceOpts');
+  if (grid) {
+    grid.style.opacity = leaveInstant ? '.4' : '';
+    grid.style.pointerEvents = leaveInstant ? 'none' : '';
+  }
+}
+function setLeaveInstant(checked) {
+  leaveInstant = checked;
+  document.getElementById('chkLeaveInstant').checked = checked;
+  syncLeaveInstantUI();
   renderList();
   saveSettings();
 }
@@ -1507,7 +1532,7 @@ function toggleTvMode() {
 /* ═══════════════════════ PERSISTENCE ══════════════════════════ */
 
 function currentSettingsObj() {
-  return { colors, bgColor, headerBgColor, rowBrightness, rowTextColor, refreshSecs, maskFirst, maskLast, showSummary, maxRows, headerFontSz, dataFontSz, selectedFont, scrollSpeed: SCROLL_PX_PER_S, leaveGraceMin };
+  return { colors, bgColor, headerBgColor, rowBrightness, rowTextColor, refreshSecs, maskFirst, maskLast, showSummary, maxRows, headerFontSz, dataFontSz, selectedFont, scrollSpeed: SCROLL_PX_PER_S, leaveGraceMin, leaveInstant };
 }
 function applySettingsObj(s) {
   if (!s) return;
@@ -1532,6 +1557,7 @@ function applySettingsObj(s) {
   if (s.selectedFont)                selectedFont    = s.selectedFont;
   if (s.scrollSpeed !== undefined)   SCROLL_PX_PER_S = s.scrollSpeed;
   if (s.leaveGraceMin !== undefined) { leaveGraceMin = s.leaveGraceMin; LEAVE_GRACE_MS = leaveGraceMin * 60 * 1000; }
+  if (s.leaveInstant  !== undefined) leaveInstant  = s.leaveInstant;
 }
 function saveSettings() {
   try { localStorage.setItem('erStatus_v4', JSON.stringify(currentSettingsObj())); } catch {}
@@ -1714,6 +1740,7 @@ function render() { initialFetch(); }
   applyFont();
   buildRefreshOpts();
   buildLeaveGraceOpts();
+  document.getElementById('chkLeaveInstant').checked = leaveInstant;
   buildScrollOpts();
   buildRowsOpts();
   buildBgPicker();
