@@ -405,10 +405,12 @@ function renderWaitList(patients) {
 
 /* ═══════════ FETCH ═══════════ */
 let REFRESH = 30, cd = 30, cdInterval = null;
+/* token ถูกฝังมาจาก server.js ตอนเสิร์ฟหน้านี้ (window.__API_TOKEN__) */
+const API_HEADERS = window.__API_TOKEN__ ? { 'X-API-Token': window.__API_TOKEN__ } : {};
 
 async function load() {
   try {
-    const resp = await fetch('/api/er-data', { cache:'no-store' });
+    const resp = await fetch('/api/er-data', { cache:'no-store', headers: API_HEADERS });
     const json = await resp.json();
     if (!json.ok) throw new Error(json.error);
     if (json.hospitalName) document.getElementById('hdrHosp').textContent = json.hospitalName;

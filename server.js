@@ -34,6 +34,25 @@ const PROFILES_FILE = path.join(DATA_DIR, 'profiles.json');
 
 app.use(cors());
 app.use(express.json());
+
+/* ── ฝัง API token ลงในหน้า dashboard/tv ตอนเสิร์ฟไฟล์ (ไม่ใช่ static ตรงๆ)
+   เพื่อให้หน้าจอเรียก /api/er-data ได้เองอัตโนมัติโดยไม่ต้อง publish token ผ่าน endpoint อื่น ── */
+function serveWithToken(fileName) {
+  return (req, res) => {
+    try {
+      const cfg   = loadConfig();
+      const token = cfg?.apiToken || '';
+      let html = fs.readFileSync(path.join(__dirname, fileName), 'utf8');
+      html = html.replace('<script>', `<script>\nwindow.__API_TOKEN__=${JSON.stringify(token)};\n`);
+      res.type('html').send(html);
+    } catch (err) {
+      res.status(500).send('โหลดหน้าไม่สำเร็จ: ' + err.message);
+    }
+  };
+}
+app.get('/dashboard.html', serveWithToken('dashboard.html'));
+app.get('/tv.html',        serveWithToken('tv.html'));
+
 app.use(express.static(__dirname)); /* serve HTML files */
 
 /* ══════════════════════════════════════════════
@@ -134,6 +153,19 @@ function fillPasswordIfUnchanged(cfg) {
   return cfg;
 }
 
+/* ── บังคับ API token กับ endpoint ที่ดึงข้อมูลคนไข้ — กัน copy URL ไปยิงตรงจาก Postman
+   ถ้ายังไม่เคยตั้งค่า token ไว้ (ค่าว่าง) จะไม่บังคับ เพื่อไม่ให้เครื่องเก่าที่ยังไม่ได้ตั้ง token พังทันที ── */
+function requireApiToken(req, res) {
+  const cfg = loadConfig();
+  if (!cfg?.apiToken) return true;
+  const provided = req.get('X-API-Token') || req.query.token;
+  if (provided !== cfg.apiToken) {
+    res.status(401).json({ ok: false, error: 'ต้องระบุ API token ให้ถูกต้อง' });
+    return false;
+  }
+  return true;
+}
+
 /**
  * Run a query using a one-shot connection.
  * Works for both MySQL and PostgreSQL.
@@ -209,6 +241,55 @@ app.get('/api/config', (req, res) => {
   res.json({ ok: true, config: maskConfig(cfg) });
 });
 
+/* ── POST /api/officer-login — เช็คสิทธิ์ Admin ผ่านตาราง officer ของ HOSxP ── */
+/* ต้องมี officer_task_id='77' ผูกกับกลุ่มของ officer คนนั้นถึงจะเข้าหน้าตั้งค่าได้
+   ถ้ายังไม่เคยตั้งค่าฐานข้อมูลเลย (ติดตั้งเครื่องใหม่) อนุญาตให้เข้าได้โดยไม่ต้อง login
+   เพราะยังไม่มีฐานข้อมูลให้เช็คสิทธิ์ */
+app.post('/api/officer-login', async (req, res) => {
+  const cfg = loadConfig();
+  if (!cfg) return res.json({ ok: true, allowed: true, bootstrap: true });
+
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.json({ ok: true, allowed: false });
+
+  /* คอลัมน์จริงใน HOSxP: officer.officer_login_name / officer.officer_login_password_md5
+     (เก็บ MD5 hash เป็นตัวพิมพ์ใหญ่ ต่างจาก MySQL/PG MD5() ที่คืนตัวพิมพ์เล็ก — เทียบแบบไม่สนตัวเล็กใหญ่)
+     เช็คด้วยว่า officer_active='Y' กันบัญชีที่ถูกปิดใช้งานแล้วยัง login เข้ามาได้ */
+  const isMySQL = cfg.dbType === 'mysql';
+  const sql = isMySQL ? `
+    SELECT l.officer_id
+    FROM officer_group_task_access t
+    LEFT OUTER JOIN officer_group g ON g.officer_group_id = t.officer_group_id
+    LEFT OUTER JOIN officer_group_list l ON l.officer_group_id = g.officer_group_id
+    LEFT OUTER JOIN officer o ON o.officer_id = l.officer_id
+    WHERE o.officer_login_name = ?
+      AND UPPER(o.officer_login_password_md5) = UPPER(MD5(?))
+      AND o.officer_active = 'Y'
+      AND t.officer_task_id = '77'
+    LIMIT 1
+  ` : `
+    SELECT l.officer_id
+    FROM officer_group_task_access t
+    LEFT OUTER JOIN officer_group g ON g.officer_group_id = t.officer_group_id
+    LEFT OUTER JOIN officer_group_list l ON l.officer_group_id = g.officer_group_id
+    LEFT OUTER JOIN officer o ON o.officer_id = l.officer_id
+    WHERE o.officer_login_name = $1
+      AND UPPER(o.officer_login_password_md5) = UPPER(MD5($2))
+      AND o.officer_active = 'Y'
+      AND t.officer_task_id = '77'
+    LIMIT 1
+  `;
+
+  try {
+    const rows = await runQuery(cfg, sql, [username, password]);
+    console.log(`[OfficerLogin] ${username} — ${rows.length > 0 ? 'allowed' : 'denied'}`);
+    res.json({ ok: true, allowed: rows.length > 0 });
+  } catch (err) {
+    console.error('[OfficerLogin] ERROR —', err.message);
+    res.status(500).json({ ok: false, error: 'เชื่อมต่อฐานข้อมูลไม่ได้: ' + err.message });
+  }
+});
+
 /* ── GET  /api/status — server health check ── */
 app.get('/api/status', (req, res) => {
   const cfg = loadConfig();
@@ -252,6 +333,7 @@ app.post('/api/test', async (req, res) => {
 
 /* ── GET /api/er-data — ER patient list (today) ── */
 app.get('/api/er-data', async (req, res) => {
+  if (!requireApiToken(req, res)) return;
   const cfg = loadConfig();
   if (!cfg) {
     return res.status(503).json({ ok: false, error: 'ยังไม่ได้ตั้งค่าฐานข้อมูล กรุณาตั้งค่าก่อน' });
@@ -315,6 +397,7 @@ app.get('/api/er-data', async (req, res) => {
 
 /* ── GET /api/er-leave-summary — สรุปสถานะออกจาก ER วันนี้ ── */
 app.get('/api/er-leave-summary', async (req, res) => {
+  if (!requireApiToken(req, res)) return;
   const cfg = loadConfig();
   if (!cfg) return res.status(503).json({ ok: false, error: 'ยังไม่ได้ตั้งค่าฐานข้อมูล' });
 

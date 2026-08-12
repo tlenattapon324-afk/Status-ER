@@ -634,6 +634,9 @@ let lastError       = null;
 let lastErrType     = null;
 let autoRetryActive = false;
 const API_BASE      = window.location.origin;
+/* token ถูกฝังมาจาก server.js ตอนเสิร์ฟหน้านี้ (window.__API_TOKEN__) — แนบไปกับ
+   request ที่ดึงข้อมูลผู้ป่วยเสมอ ถ้า server ยังไม่ได้ตั้ง token ไว้ ค่านี้จะเป็น '' เฉยๆ ไม่กระทบอะไร */
+const API_HEADERS = window.__API_TOKEN__ ? { 'X-API-Token': window.__API_TOKEN__ } : {};
 
 /* ── แสดง config ปัจจุบันใน error box ── */
 async function showCurrentCfgInError() {
@@ -747,7 +750,7 @@ function mapApiData(rows) {
 async function initialFetch() {
   setApiState('loading');
   try {
-    const resp = await fetch(`${API_BASE}/api/er-data`, { cache:'no-store' });
+    const resp = await fetch(`${API_BASE}/api/er-data`, { cache:'no-store', headers: API_HEADERS });
     const json = await resp.json().catch(()=>({}));
     if (!resp.ok||!json.ok) {
       const msg = json.error || `HTTP ${resp.status}`;
@@ -776,7 +779,7 @@ async function initialFetch() {
 /* ── Background fetch — store as pending, never disturb scroll ── */
 async function backgroundFetch() {
   try {
-    const resp = await fetch(`${API_BASE}/api/er-data`, { cache:'no-store' });
+    const resp = await fetch(`${API_BASE}/api/er-data`, { cache:'no-store', headers: API_HEADERS });
     const json = await resp.json().catch(()=>({}));
     if (!resp.ok||!json.ok) {
       const msg = json.error || `HTTP ${resp.status}`;
@@ -864,7 +867,7 @@ function renderLeaveSummary(items) {
 
 async function fetchLeaveSummary() {
   try {
-    const resp = await fetch('/api/er-leave-summary', { cache:'no-store' });
+    const resp = await fetch('/api/er-leave-summary', { cache:'no-store', headers: API_HEADERS });
     const json = await resp.json();
     if (json.ok) renderLeaveSummary(json.data);
   } catch {}
