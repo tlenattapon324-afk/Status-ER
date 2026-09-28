@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ER Status — หน้าหลัก</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="vendor/tailwind.js"></script>
   <style>
     @keyframes float {
       0%,100% { transform: translateY(0px); }
@@ -115,6 +115,12 @@
         ตั้งค่าการเชื่อมต่อฐานข้อมูล
       </button>
 
+      <button id="btnClear" onclick="clearConnection()"
+              class="w-full rounded-2xl py-3 font-bold text-sm cursor-pointer
+                     bg-red-900/40 border border-red-700/50 text-red-300 hover:bg-red-900/60">
+        🗑 ล้างการเชื่อมต่อเดิม (เพื่อตั้งค่าใหม่)
+      </button>
+
       <button id="btnDashboard"
               onclick="location.href='dashboard.html'"
               class="btn-secondary w-full rounded-2xl py-4 font-bold text-base
@@ -179,6 +185,19 @@
         dashBtn.classList.remove('opacity-35');
       } else {
         dashBtn.disabled = true;
+      }
+    }
+
+    async function clearConnection() {
+      if (!confirm('ล้างการเชื่อมต่อฐานข้อมูลเดิม?\nหลังล้างจะเข้าหน้าตั้งค่าเพื่อใส่ Connection ใหม่ได้เลยโดยไม่ต้อง login')) return;
+      try {
+        const r = await fetch('/api/config', { method: 'DELETE' });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.error || 'ล้างไม่สำเร็จ');
+        localStorage.removeItem('erStatus_db');
+        location.href = 'settings.html';
+      } catch (e) {
+        alert('ล้างการเชื่อมต่อไม่สำเร็จ: ' + e.message);
       }
     }
 

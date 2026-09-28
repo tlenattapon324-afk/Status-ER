@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName      "Status ER"
-#define MyAppVersion   "1.3.0"
+#define MyAppVersion   "1.3.1"
 #define MyAppPublisher "imhosxp4-byte"
 #define MyAppURL       "https://github.com/imhosxp4-byte/Status-ER"
 #define SrcDir         RemoveBackslashUnlessRoot(SourcePath)
@@ -60,6 +60,9 @@ Source: "{#SrcDir}\dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SrcDir}\tv.html";        DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SrcDir}\index.html";     DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SrcDir}\settings.html";  DestDir: "{app}"; Flags: ignoreversion
+
+; Tailwind (local copy — client ไม่ต้องออกอินเทอร์เน็ตเพื่อโหลดสไตล์)
+Source: "{#SrcDir}\vendor\tailwind.js"; DestDir: "{app}\vendor"; Flags: ignoreversion
 
 ; Server
 Source: "{#SrcDir}\server.js";           DestDir: "{app}"; Flags: ignoreversion

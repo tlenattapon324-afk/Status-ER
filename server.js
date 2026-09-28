@@ -295,10 +295,22 @@ app.get('/api/status', (req, res) => {
   const cfg = loadConfig();
   res.json({
     ok: true,
-    configured: !!cfg,
+    configured: !!(cfg && cfg.host),
     dbType: cfg?.dbType || null,
     host:   cfg?.host   || null,
   });
+});
+
+/* ── DELETE /api/config — ล้างค่าการเชื่อมต่อ DB (เก็บ apiToken ไว้) เพื่อให้เข้าหน้าตั้งค่าใหม่ได้โดยไม่ต้อง login ── */
+app.delete('/api/config', (req, res) => {
+  try {
+    const old = loadConfig();
+    saveConfig(old?.apiToken ? { apiToken: old.apiToken } : {});
+    console.log('[Config] Connection cleared');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 /* ── POST /api/config — save DB config to file ── */
