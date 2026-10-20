@@ -17,9 +17,11 @@
   --surface-3: rgba(255,255,255,.15);
   --border:    rgba(255,255,255,.16);
   --border-2:  rgba(255,255,255,.26);
-  --cyan:      #38e2ff;
+  --cyan:      #38e2ff;  /* Neon Cyan / Electric Blue — สีเส้น/ลวดลายหลัก */
   --blue:      #60a5fa;
   --violet:    #a78bfa;
+  --teal:      #2dd4bf;  /* Bright Teal / Electric Aqua — สีรองเสริม */
+  --amber:     #fbbf24;  /* Glowing Amber / Neon Gold — จุดเน้นคอนทราสต์ */
   --text:      #ffffff;
   --text-dim:  #c3d4ef;
   --text-faint:#8fa8d1;
@@ -49,19 +51,25 @@ body {
 
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
 
-/* ── เส้นแสงฟ้าไซแอนนุ่มๆ ไว้ริมจอซ้าย-ขวา — สไตล์ "clean futuristic" เน้นพื้นที่ตรงกลางโล่ง
-   ไว้แสดงข้อมูล ไม่มีลวดลายซับซ้อนบังสายตา (แทนกรอบมุม HUD + วงแหวนใหญ่ชุดก่อนหน้าที่ดูรกไป) ── */
+/* ── เส้นแสงนุ่มๆ ไว้ริมจอซ้าย-ขวา — สไตล์ "clean futuristic" เน้นพื้นที่ตรงกลางโล่งไว้แสดงข้อมูล
+   ซ้าย = ไซแอน (สีหลัก), ขวา = ฟ้าอมเขียว/teal (สีรองเสริม) ตามโทนที่กำหนด ── */
 #sideGlow { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 #sideGlow::before, #sideGlow::after {
   content: ''; position: absolute; top: 8%; bottom: 8%; width: 2px;
-  background: linear-gradient(to bottom, transparent, var(--cyan) 15%, var(--cyan) 85%, transparent);
   filter: blur(1px);
-  box-shadow: 0 0 22px 3px rgba(56,226,255,.30);
   opacity: .4;
   animation: sideGlowPulse 7s ease-in-out infinite;
 }
-#sideGlow::before { left: 16px; }
-#sideGlow::after  { right: 16px; animation-delay: 3.5s; }
+#sideGlow::before {
+  left: 16px;
+  background: linear-gradient(to bottom, transparent, var(--cyan) 15%, var(--cyan) 85%, transparent);
+  box-shadow: 0 0 22px 3px rgba(56,226,255,.30);
+}
+#sideGlow::after {
+  right: 16px; animation-delay: 3.5s;
+  background: linear-gradient(to bottom, transparent, var(--teal) 15%, var(--teal) 85%, transparent);
+  box-shadow: 0 0 22px 3px rgba(45,212,191,.28);
+}
 @keyframes sideGlowPulse { 0%, 100% { opacity: .25; } 50% { opacity: .55; } }
 
 /* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
@@ -351,8 +359,9 @@ tbody tr:hover td { background: var(--surface-2); }
 }
 #ftLeft  { display:flex; align-items:center; gap:10px; }
 #ftLeave { color: var(--good); border-color: rgba(52,211,153,.25); background: rgba(52,211,153,.08); display:none; }
+/* จุดเน้นคอนทราสต์สีเหลืองทอง/amber — ให้ตานำไปจับที่ตัวนับถอยหลังรีเฟรช ตัดกับโทนฟ้า-ไซแอนที่เหลือทั้งจอ */
 #ftCd {
-  color: var(--cyan); background: rgba(34,211,238,.10); border-color: rgba(34,211,238,.25);
+  color: var(--amber); background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.30);
   font-variant-numeric: tabular-nums;
 }
 
