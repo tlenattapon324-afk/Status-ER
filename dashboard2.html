@@ -8,8 +8,9 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* ── โทนสีเดียว ฟ้าน้ำเงิน (ไอที/เทคโนโลยี) แทนโทนดำ ── */
-  --bg:        #0b3d78;
+  /* ── โทนสีเดียว Slate — แบบ dark dashboard ยอดนิยมของ Tailwind/React (Tailwind UI, shadcn/ui ฯลฯ)
+     เลือกได้จากแผงตั้งค่า ⚙ ของหน้านี้ว่าจะใช้โทนนี้หรือฟ้า/น้ำเงินโทนอื่น ── */
+  --bg:        #0f172a;  /* Slate-900 */
   --panel-dk:  rgba(3,16,36,.55);   /* แผ่นเข้มลอยทับพื้นฟ้า (header/footer/thead) */
   --surface:   rgba(255,255,255,.07);
   --surface-2: rgba(255,255,255,.11);
@@ -808,7 +809,7 @@ async function switchToClassic() {
    ═══════════════════════════════════════════════════════════════ */
 const S2_STORAGE_KEY = 'erStatus_screen2_v1';
 const DEFAULT_S2 = {
-  bgColor:     '#0b3d78',
+  bgColor:     '#0f172a',
   zoneColors:  { ...DEFAULT_ZONE_COLOR },
   refreshSecs: 30,
   leaveGraceMin: 5,
@@ -832,6 +833,8 @@ const S2_SCROLL_OPTS = [
   { label:'ช้ามาก', val:6 }, { label:'ช้า', val:10 }, { label:'ปานกลาง', val:18 }, { label:'เร็ว', val:30 },
 ];
 const S2_BG_PRESETS = [
+  { hex:'#0f172a', label:'Slate (แนะนำ)' },
+  { hex:'#0d1117', label:'GitHub Dark' },
   { hex:'#0b3d78', label:'ฟ้าน้ำเงิน' },
   { hex:'#0a2f63', label:'น้ำเงินเข้ม' },
   { hex:'#0369a1', label:'ฟ้าสด' },
