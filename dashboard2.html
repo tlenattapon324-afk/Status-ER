@@ -28,10 +28,13 @@
   --bad:       #fb7185;
   --hdr-font:  .72rem;   /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
   --data-font: .98rem;
+  --bg-glow:   #1a43a3;  /* สีกลางจอที่สว่างกว่า --bg (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
 }
 
 html, body {
-  background: var(--bg);
+  /* พื้นหลังไล่เฉดแบบ "จุดสว่างกลางจอ" (spotlight/vignette) — สว่างตรงกลาง มืดลงที่ขอบ/มุมจอ
+     เหมือนภาพตัวอย่างจอ HUD เทคโนโลยี โดยสี glow กลางจอคำนวณจาก --bg ให้เข้าชุดกันเสมอ */
+  background: radial-gradient(ellipse 85% 75% at 50% 34%, var(--bg-glow), var(--bg) 72%);
   color: var(--text);
   font-family: 'Segoe UI', 'Noto Sans Thai', 'Tahoma', sans-serif;
   height: 100%;
@@ -43,33 +46,6 @@ body {
   grid-template-rows: auto auto 1fr auto;
   position: relative;
 }
-
-/* ── NETWORK BACKGROUND — ลายวงจรข้อมูล/เครือข่าย (จุดเชื่อมโยงด้วยเส้นบางๆ)
-   แบบอินโฟกราฟิกเทคโนโลยี พื้นฐานยังเป็น --bg สีเดียว ชั้นนี้แค่ลอยทับเป็นลวดลายเท่านั้น ── */
-#netBg {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 90% 85% at 50% 40%, #000 0%, transparent 82%);
-          mask-image: radial-gradient(ellipse 90% 85% at 50% 40%, #000 0%, transparent 82%);
-}
-#netBg svg { width: 100%; height: 100%; display: block; }
-#netBg .net-line  { stroke: rgba(56,226,255,.30); stroke-width: 1.3; }
-#netBg .net-line.v { stroke: rgba(167,139,250,.24); }
-#netBg .net-node  { fill: var(--cyan); animation: netTwinkle 4.5s ease-in-out infinite; }
-#netBg .net-node.v { fill: var(--violet); }
-#netBg .net-node.p { fill: #f472b6; }
-@keyframes netTwinkle {
-  0%, 100% { opacity: .35; r: 2.1; }
-  50%      { opacity: 1;   r: 3; }
-}
-/* เส้นแสงเลื่อนไหลตามเส้นวงจร — จำลองสัญญาณ/ข้อมูลวิ่งผ่านเครือข่าย
-   --len ต้องตั้งให้ใกล้เคียงความยาวเส้นจริง (ใส่ผ่าน style="--len:NN") เพื่อให้จุดแสงวิ่งครบเส้นพอดีแล้ววนใหม่ ── */
-#netBg .net-pulse {
-  stroke: var(--cyan); stroke-width: 2;
-  stroke-dasharray: 8 var(--len, 100);
-  filter: drop-shadow(0 0 3px var(--cyan));
-  animation: netPulseMove 4s linear infinite;
-}
-@keyframes netPulseMove { to { stroke-dashoffset: calc(-1 * (var(--len, 100) + 8)); } }
 
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
 
@@ -438,38 +414,6 @@ tbody tr:hover td { background: var(--surface-2); }
 </head>
 <body>
 
-<div id="netBg">
-  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <defs>
-      <pattern id="netTile" width="200" height="200" patternUnits="userSpaceOnUse">
-        <!-- เส้นเชื่อมจุด (วงจร/เครือข่ายข้อมูล) -->
-        <line class="net-line"   x1="25" y1="30"  x2="95"  y2="15"/>
-        <line class="net-line v" x1="95" y1="15"  x2="165" y2="45"/>
-        <line class="net-line"   x1="25" y1="30"  x2="55"  y2="95"/>
-        <line class="net-line"   x1="95" y1="15"  x2="55"  y2="95"/>
-        <line class="net-line"   x1="55" y1="95"  x2="135" y2="110"/>
-        <line class="net-line v" x1="165" y1="45" x2="135" y2="110"/>
-        <line class="net-line"   x1="135" y1="110" x2="180" y2="160"/>
-        <line class="net-line"   x1="55" y1="95"  x2="30"  y2="165"/>
-        <line class="net-line v" x1="30" y1="165" x2="100" y2="180"/>
-        <line class="net-line"   x1="135" y1="110" x2="100" y2="180"/>
-        <!-- จุดแสงวิ่งตามเส้น จำลองสัญญาณข้อมูล -->
-        <line class="net-pulse" style="--len:89"  x1="95"  y1="15"  x2="55"  y2="95"/>
-        <line class="net-pulse" style="--len:67"  x1="135" y1="110" x2="180" y2="160"/>
-        <!-- จุดเชื่อมโยง (node) -->
-        <circle class="net-node"   cx="25"  cy="30"  r="2.4" style="animation-delay:-.2s"/>
-        <circle class="net-node v" cx="95"  cy="15"  r="2.4" style="animation-delay:-1.4s"/>
-        <circle class="net-node"   cx="165" cy="45"  r="2.4" style="animation-delay:-2.6s"/>
-        <circle class="net-node p" cx="55"  cy="95"  r="2.4" style="animation-delay:-.8s"/>
-        <circle class="net-node"   cx="135" cy="110" r="2.4" style="animation-delay:-3.1s"/>
-        <circle class="net-node v" cx="180" cy="160" r="2.4" style="animation-delay:-1.9s"/>
-        <circle class="net-node"   cx="30"  cy="165" r="2.4" style="animation-delay:-2.3s"/>
-        <circle class="net-node p" cx="100" cy="180" r="2.4" style="animation-delay:-.5s"/>
-      </pattern>
-    </defs>
-    <rect width="1600" height="900" fill="url(#netTile)"/>
-  </svg>
-</div>
 
 <div id="hdr">
   <div class="hdr-left">
@@ -989,8 +933,47 @@ function s2ApplyObj(s) {
   s2ApplyToDom();
 }
 
+/* ── คำนวณสี "glow" กลางจอจาก --bg — ใช้ HSL (เพิ่มความสว่าง+ความสด) แทนการผสมขาวตรงๆ
+   เพราะผสมขาวแบบ RGB ธรรมดาจะทำให้สีจางลงเป็นเทาๆ ไม่ใช่สีสดแบบจอ HUD ในภาพตัวอย่าง ── */
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max+min)/2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max-min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch (max) {
+      case r: h = (g-b)/d + (g<b?6:0); break;
+      case g: h = (b-r)/d + 2; break;
+      default: h = (r-g)/d + 4;
+    }
+    h /= 6;
+  }
+  return [h*360, s*100, l*100];
+}
+function hslToHex(h, s, l) {
+  h/=360; s/=100; l/=100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p,q,t) => { if (t<0) t+=1; if (t>1) t-=1;
+      if (t<1/6) return p+(q-p)*6*t; if (t<1/2) return q;
+      if (t<2/3) return p+(q-p)*(2/3-t)*6; return p; };
+    const q = l<0.5 ? l*(1+s) : l+s-l*s, p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+  }
+  const toHex = c => Math.round(c*255).toString(16).padStart(2,'0');
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+function glowColor(hex) {
+  const [h, s, l] = hexToHsl(hex);
+  return hslToHex(h, Math.min(90, s+25), Math.min(52, l+26));
+}
+
 function s2ApplyToDom() {
   document.documentElement.style.setProperty('--bg', bgColor);
+  document.documentElement.style.setProperty('--bg-glow', glowColor(bgColor));
   document.documentElement.style.setProperty('--hdr-font', hdrFontPx + 'px');
   document.documentElement.style.setProperty('--data-font', dataFontPx + 'px');
   document.getElementById('main').style.gridTemplateColumns = showSide ? '1fr 300px' : '1fr';
