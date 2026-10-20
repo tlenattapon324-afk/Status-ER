@@ -572,7 +572,9 @@ const ZONE_FALLBACK = {
   4: 'โซนเขียว (Semi-Urgent)',
   5: 'โซนขาว (Non-Urgent)',
 };
-const DEFAULT_ZONE_COLOR = { 1:'#ef4444', 2:'#f472b6', 3:'#facc15', 4:'#4ade80', 5:'#e2e8f0' };
+/* สีโซน — ยังอ้างอิงความหมายมาตรฐาน ER เดิม (แดง/ชมพู/เหลือง/เขียว/ขาว ตามระดับวิกฤต)
+   แค่ลดความสด/อุ่นลงให้เย็นตาขึ้น เข้ากับโทน Slate ของพื้นหลัง ── */
+const DEFAULT_ZONE_COLOR = { 1:'#dc4a56', 2:'#e06bb0', 3:'#d9a93f', 4:'#3fb88a', 5:'#cbd5e1' };
 let   ZONE_COLOR    = { ...DEFAULT_ZONE_COLOR };  /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
 const ZONE_MAX_WAIT = { 1:0, 2:15, 3:30, 4:60, 5:120 };
 
@@ -610,7 +612,21 @@ function luminance(hex) {
   const f = c => c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
   return 0.2126*f(r) + 0.7152*f(g) + 0.0722*f(b);
 }
-const textOn = hex => luminance(hex) > 0.45 ? '#0a0f1e' : '#ffffff';
+/* เลือกสีตัวอักษร (เข้ม/ขาว) จากคอนทราสต์จริงเทียบกับพื้นสีที่ส่งเข้ามา ไม่ใช้ threshold ความสว่างเดี่ยวๆ
+   เพราะสีโทนกลางๆ (เช่น ชมพู/เหลืองอมเขียวแบบ "เย็น") อาจได้คอนทราสต์กับขาวแค่ ~2:1 (อ่านยาก)
+   ทั้งที่ยังไม่เข้ากับ threshold เดิม — เทียบคอนทราสต์ทั้งสองแบบแล้วเลือกตัวที่อ่านง่ายกว่าจริงๆ ── */
+function contrastRatio(l1, l2) {
+  const a = Math.max(l1, l2) + 0.05, b = Math.min(l1, l2) + 0.05;
+  return a / b;
+}
+const DARK_TEXT  = '#0a0f1e';
+const LIGHT_TEXT = '#ffffff';
+const textOn = hex => {
+  const l = luminance(hex);
+  const vsDark  = contrastRatio(l, luminance(DARK_TEXT));
+  const vsLight = contrastRatio(l, luminance(LIGHT_TEXT));
+  return vsDark >= vsLight ? DARK_TEXT : LIGHT_TEXT;
+};
 
 function zoneName(row) {
   const n = (row.zone_name || '').toString().trim();
