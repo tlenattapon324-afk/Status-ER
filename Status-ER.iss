@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName      "Status ER"
-#define MyAppVersion   "1.3.1"
+#define MyAppVersion   "1.4.0"
 #define MyAppPublisher "imhosxp4-byte"
 #define MyAppURL       "https://github.com/imhosxp4-byte/Status-ER"
 #define SrcDir         RemoveBackslashUnlessRoot(SourcePath)
@@ -56,7 +56,8 @@ Source: "{#SrcDir}\build\stop-server.vbs"; DestDir: "{app}"; Flags: ignoreversio
 Source: "{#SrcDir}\build\status-er.ico";   DestDir: "{app}"; Flags: ignoreversion
 
 ; Web UI
-Source: "{#SrcDir}\dashboard.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SrcDir}\dashboard.html";  DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SrcDir}\dashboard2.html"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SrcDir}\tv.html";        DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SrcDir}\index.html";     DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SrcDir}\settings.html";  DestDir: "{app}"; Flags: ignoreversion

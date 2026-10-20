@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ER Status — Screen 2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── โทนสีเดียว เน้นนวัตกรรมไอที: navy เข้ม + accent ฟ้า/ไซแอน ── */
+  --bg:        #0a0f1e;
+  --surface:   #111a30;
+  --surface-2: #16213d;
+  --border:    #22304f;
+  --cyan:      #22d3ee;
+  --blue:      #3b82f6;
+  --text:      #f1f5f9;
+  --text-dim:  #8ea0bd;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Noto Sans Thai', 'Tahoma', sans-serif;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+}
+
+/* ── HEADER ── */
+#hdr {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.hdr-left { display: flex; align-items: center; gap: 14px; }
+.hdr-logo {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(34,211,238,.35);
+}
+.hdr-left a {
+  color: var(--cyan); font-size: .78rem; text-decoration: none;
+  font-weight: 700; display: inline-block; margin-bottom: 3px;
+}
+.hdr-left a:hover { text-decoration: underline; }
+#hdrHosp { font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1.15; }
+#hdrSub  { font-size: .80rem; color: var(--text-dim); font-weight: 600; margin-top: 1px; }
+
+.hdr-center { text-align: center; flex-shrink: 0; }
+#hdrTitle {
+  font-size: .78rem; font-weight: 800; color: var(--cyan);
+  text-transform: uppercase; letter-spacing: .2em; margin-bottom: 8px;
+}
+#totalBadge {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 16px; padding: 6px 22px;
+}
+#totalNum { font-size: 2.6rem; font-weight: 900; line-height: 1; color: var(--cyan);
+            text-shadow: 0 0 18px rgba(34,211,238,.45); }
+#totalLbl { font-size: 1rem; font-weight: 700; color: var(--text-dim); }
+
+.hdr-right { text-align: right; flex-shrink: 0; }
+#clock {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 2.4rem; font-weight: 800;
+  color: var(--text); letter-spacing: .05em;
+}
+#dateStr { font-size: .8rem; color: var(--text-dim); font-weight: 600; margin-top: 2px; }
+
+/* ── ZONE STRIP ── */
+#zones {
+  display: flex;
+  gap: 14px;
+  padding: 14px 28px;
+  flex-shrink: 0;
+}
+.zc {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  transition: box-shadow .2s;
+}
+.zc-count {
+  font-size: 2.6rem; font-weight: 900; line-height: 1;
+  flex-shrink: 0; min-width: 50px; text-align: center;
+  color: var(--text);
+}
+.zc-info { min-width: 0; flex: 1; }
+.zc-pill {
+  display: inline-block;
+  font-size: .92rem; font-weight: 800;
+  padding: 3px 12px; border-radius: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%;
+}
+.zc-sub { font-size: .68rem; color: var(--text-dim); font-weight: 600; margin-top: 4px; }
+.zc-pulse { animation: zcpulse 1.4s infinite; }
+@keyframes zcpulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.55); }
+  50%     { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+}
+
+/* ── PATIENT TABLE ── */
+#tableWrap {
+  margin: 0 28px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#tableScroll { flex: 1; overflow-y: auto; min-height: 0; }
+#tableScroll::-webkit-scrollbar { width: 0; height: 0; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: .76rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  text-align: left;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+tbody td {
+  padding: 13px 18px;
+  font-size: 1.02rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(255,255,255,.03); }
+.td-time  { font-family:'Consolas','Courier New',monospace; color: var(--text-dim); font-weight:700; white-space:nowrap; }
+.td-hn    { font-family:'Consolas','Courier New',monospace; color: var(--text-dim); white-space:nowrap; }
+.td-name  { font-weight: 700; }
+.td-status{ color: var(--text-dim); font-size:.9rem; }
+
+.zone-pill {
+  display: inline-block;
+  font-size: .85rem; font-weight: 800;
+  padding: 4px 14px; border-radius: 999px;
+  white-space: nowrap;
+}
+
+#emptyState {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--text-dim); gap: 10px; padding: 40px;
+}
+#emptyState .ic { font-size: 2.6rem; }
+
+/* ── FOOTER ── */
+#footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: .82rem; flex-shrink: 0;
+}
+#ftLeft  { color: var(--text-dim); font-weight: 700; display:flex; align-items:center; gap:14px; }
+#ftLeave { color: #4ade80; }
+#ftUpdate{ color: var(--text-dim); }
+#ftCd {
+  color: var(--cyan); font-weight: 800; font-size: .82rem;
+  background: rgba(34,211,238,.10); border-radius: 8px; padding: 3px 10px;
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo">🖥</div>
+    <div>
+      <a href="/dashboard.html">← Dashboard</a>
+      <div id="hdrHosp">โรงพยาบาล</div>
+      <div id="hdrSub">ห้องอุบัติเหตุและฉุกเฉิน</div>
+    </div>
+  </div>
+  <div class="hdr-center">
+    <div id="hdrTitle">ER Status</div>
+    <div id="totalBadge">
+      <span id="totalNum">–</span>
+      <span id="totalLbl">ราย</span>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div id="clock">00:00:00</div>
+    <div id="dateStr"></div>
+  </div>
+</div>
+
+<div id="zones"></div>
+
+<div id="tableWrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:100px">เวลา</th>
+        <th style="width:110px">HN</th>
+        <th>ชื่อ-สกุล</th>
+        <th style="width:220px">โซน</th>
+        <th style="width:180px">สถานะ</th>
+      </tr>
+    </thead>
+  </table>
+  <div id="tableScroll">
+    <table>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div id="emptyState" style="display:none">
+      <div class="ic">✅</div>
+      <div>ไม่มีผู้ป่วยในห้องฉุกเฉินขณะนี้</div>
+    </div>
+  </div>
+</div>
+
+<div id="footer">
+  <div id="ftLeft">
+    <span id="ftTotal">กำลังโหลด...</span>
+    <span id="ftLeave"></span>
+  </div>
+  <div id="ftUpdate"></div>
+  <div id="ftCd">↺ –</div>
+</div>
+
+<script>
+/* ═══════════ CONFIG ═══════════
+   ชื่อ/สีสำรอง ใช้ตอนฐานข้อมูลไม่มีชื่อโซน (er_emergency_type.name) ── */
+const ZONE_FALLBACK = {
+  1: 'โซนแดง (Resuscitation)',
+  2: 'โซนชมพู (Emergency)',
+  3: 'โซนเหลือง (Urgent)',
+  4: 'โซนเขียว (Semi-Urgent)',
+  5: 'โซนขาว (Non-Urgent)',
+};
+const ZONE_COLOR = { 1:'#ef4444', 2:'#f472b6', 3:'#facc15', 4:'#4ade80', 5:'#e2e8f0' };
+
+function luminance(hex) {
+  const r=parseInt(hex.slice(1,3),16)/255, g=parseInt(hex.slice(3,5),16)/255, b=parseInt(hex.slice(5,7),16)/255;
+  const f = c => c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+  return 0.2126*f(r) + 0.7152*f(g) + 0.0722*f(b);
+}
+const textOn = hex => luminance(hex) > 0.45 ? '#0a0f1e' : '#ffffff';
+
+function zoneName(row) {
+  const n = (row.zone_name || '').toString().trim();
+  return n || ZONE_FALLBACK[row.lv] || `โซน ${row.lv}`;
+}
+
+/* ═══════════ CLOCK ═══════════ */
+const pad = n => String(n).padStart(2,'0');
+const TH_DAYS   = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function tick() {
+  const d = new Date();
+  document.getElementById('clock').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  document.getElementById('dateStr').textContent =
+    `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear()+543}`;
+}
+setInterval(tick, 1000); tick();
+
+/* ═══════════ NAME MASKING (ใช้ค่าเดียวกับหน้า Dashboard หลัก ถ้าตั้งไว้) ═══════════ */
+let maskFirst = false, maskLast = false;
+function maskNamePart(s) { return s.length <= 1 ? s : s[0] + '•'.repeat(Math.min(s.length-1, 6)); }
+function maskPatientName(name) {
+  if (!name || (!maskFirst && !maskLast)) return name;
+  const parts = name.trim().split(/\s+/);
+  if (parts.length < 2) return maskFirst ? maskNamePart(parts[0]) : name;
+  if (maskFirst) parts[0] = maskNamePart(parts[0]);
+  if (maskLast)  parts[parts.length-1] = maskNamePart(parts[parts.length-1]);
+  return parts.join(' ');
+}
+
+/* ═══════════ ZONE STRIP ═══════════ */
+function renderZones(zCounts, zNames) {
+  document.getElementById('zones').innerHTML = [1,2,3,4,5].map(lv => {
+    const color = ZONE_COLOR[lv];
+    const cnt   = zCounts[lv] || 0;
+    const name  = zNames[lv] || ZONE_FALLBACK[lv];
+    const pulse = (lv == 1 && cnt > 0) ? 'zc-pulse' : '';
+    return `
+      <div class="zc ${pulse}">
+        <div class="zc-count" style="color:${color}">${cnt}</div>
+        <div class="zc-info">
+          <span class="zc-pill" style="background:${color};color:${textOn(color)}">${name}</span>
+          <div class="zc-sub">ราย ในโซนนี้</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════ TABLE ═══════════ */
+function renderTable(rows) {
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('emptyState');
+  if (!rows.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = rows.map(r => {
+    const color = ZONE_COLOR[r.lv];
+    return `
+      <tr>
+        <td class="td-time">${r.time}</td>
+        <td class="td-hn">${r.hn || '–'}</td>
+        <td class="td-name">${maskPatientName(r.name) || '—'}</td>
+        <td><span class="zone-pill" style="background:${color};color:${textOn(color)}">${zoneName(r)}</span></td>
+        <td class="td-status">${r.status || '–'}</td>
+      </tr>`;
+  }).join('');
+}
+
+/* ═══════════ AUTO SCROLL (เลื่อนช้าๆ วนลูป เมื่อรายการยาวเกินจอ) ═══════════ */
+let scrollTimer = null;
+function startAutoScroll() {
+  clearInterval(scrollTimer);
+  const el = document.getElementById('tableScroll');
+  let dir = 1;
+  scrollTimer = setInterval(() => {
+    if (el.scrollHeight <= el.clientHeight + 4) return;
+    el.scrollTop += dir;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) dir = -1;
+    else if (el.scrollTop <= 0) dir = 1;
+  }, 45);
+}
+
+/* ═══════════ FETCH ═══════════ */
+let REFRESH = 30, cd = 30, cdInterval = null;
+const API_HEADERS = window.__API_TOKEN__ ? { 'X-API-Token': window.__API_TOKEN__ } : {};
+
+async function loadMaskSettings() {
+  try {
+    const r = await fetch('/api/defaults');
+    const d = await r.json();
+    if (d.ok && d.defaults) {
+      if (d.defaults.maskFirst !== undefined) maskFirst = d.defaults.maskFirst;
+      if (d.defaults.maskLast  !== undefined) maskLast  = d.defaults.maskLast;
+      else if (d.defaults.maskName !== undefined) { maskFirst = d.defaults.maskName; maskLast = d.defaults.maskName; }
+    }
+  } catch {}
+}
+
+async function load() {
+  try {
+    const resp = await fetch('/api/er-data', { cache:'no-store', headers: API_HEADERS });
+    const json = await resp.json();
+    if (!json.ok) throw new Error(json.error);
+    if (json.hospitalName) document.getElementById('hdrHosp').textContent = json.hospitalName;
+
+    const zCounts = { 1:0,2:0,3:0,4:0,5:0 };
+    const zNames  = {};
+    const rows = [];
+    let leaveCount = 0;
+
+    (json.data||[]).forEach(row => {
+      const lv = Math.min(Math.max(parseInt(row.triage_level)||5,1),5);
+      const isLeave = (row.leave_flag||'').trim().toUpperCase() === 'Y';
+      const zn = (row.zone_name||'').toString().trim();
+      if (zn && !zNames[lv]) zNames[lv] = zn;
+      if (isLeave) { leaveCount++; return; }
+
+      zCounts[lv]++;
+      const timeStr = (row.enter_time||'00:00:00').toString().split('T').pop().split('.')[0];
+      rows.push({
+        lv, zone_name: zn,
+        time: timeStr.slice(0,5),
+        hn: (row.hn||'').toString().trim(),
+        name: row.pt_name || '',
+        status: row.status_name || '',
+        _sortTime: timeStr,
+      });
+    });
+
+    rows.sort((a,b) => a.lv - b.lv || a._sortTime.localeCompare(b._sortTime));
+
+    const activeTotal = rows.length;
+    document.getElementById('totalNum').textContent = activeTotal;
+
+    renderZones(zCounts, zNames);
+    renderTable(rows);
+    startAutoScroll();
+
+    document.getElementById('ftTotal').textContent = `ผู้ป่วยในห้อง ER ${activeTotal} ราย`;
+    const leaveEl = document.getElementById('ftLeave');
+    if (leaveCount > 0) {
+      leaveEl.textContent = `· กำลังออก ${leaveCount} ราย`;
+      leaveEl.style.display = '';
+    } else {
+      leaveEl.style.display = 'none';
+    }
+    const now = new Date();
+    document.getElementById('ftUpdate').textContent =
+      `อัปเดต ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  } catch(e) {
+    document.getElementById('ftTotal').textContent = '❌ โหลดข้อมูลไม่สำเร็จ: ' + e.message;
+  }
+  cd = REFRESH;
+}
+
+function startCd() {
+  clearInterval(cdInterval);
+  cdInterval = setInterval(() => {
+    if (cd > 0) cd--;
+    document.getElementById('ftCd').textContent = `↺ ${cd}s`;
+    if (cd <= 0) load();
+  }, 1000);
+}
+
+(async function init() {
+  await loadMaskSettings();
+  await load();
+  startCd();
+})();
+
+/* ── กันจอดับเวลาเปิดหน้านี้ค้างไว้นานๆ ── */
+(function keepScreenAwake() {
+  async function requestWakeLock() {
+    try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
+  requestWakeLock();
+})();
+</script>
+</body>
+</html>

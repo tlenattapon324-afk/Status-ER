@@ -122,7 +122,7 @@
       </button>
 
       <button id="btnDashboard"
-              onclick="location.href='dashboard.html'"
+              onclick="goToDashboard()"
               class="btn-secondary w-full rounded-2xl py-4 font-bold text-base
                      flex items-center justify-center gap-3 cursor-pointer"
               disabled>
@@ -199,6 +199,17 @@
       } catch (e) {
         alert('ล้างการเชื่อมต่อไม่สำเร็จ: ' + e.message);
       }
+    }
+
+    /* ── ไปหน้าจอแสดงสถานะ ER ตามที่เลือกไว้ในหน้าตั้งค่า (user-defaults.json) ── */
+    async function goToDashboard() {
+      let screen = 'dashboard';
+      try {
+        const r = await fetch('/api/defaults');
+        const d = await r.json();
+        if (d?.defaults?.activeScreen === 'dashboard2') screen = 'dashboard2';
+      } catch {}
+      location.href = `${screen}.html`;
     }
 
     loadConnStatus();

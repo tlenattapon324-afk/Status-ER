@@ -50,8 +50,9 @@ function serveWithToken(fileName) {
     }
   };
 }
-app.get('/dashboard.html', serveWithToken('dashboard.html'));
-app.get('/tv.html',        serveWithToken('tv.html'));
+app.get('/dashboard.html',  serveWithToken('dashboard.html'));
+app.get('/dashboard2.html', serveWithToken('dashboard2.html'));
+app.get('/tv.html',         serveWithToken('tv.html'));
 
 app.use(express.static(__dirname)); /* serve HTML files */
 
@@ -361,6 +362,7 @@ app.get('/api/er-data', async (req, res) => {
       el.er_leave_status_name                             AS status_name,
       o.hn                                                AS hn,
       IFNULL(e.er_emergency_type, 5)                      AS triage_level,
+      ep.name                                             AS zone_name,
       o.vn                                                AS vn,
       COALESCE(el.leave, '')                              AS leave_flag
     FROM ovst o
@@ -381,6 +383,7 @@ app.get('/api/er-data', async (req, res) => {
         NULLIF(TRIM(CAST(e.er_emergency_type AS text)), '')::int,
         5
       )                                                   AS triage_level,
+      ep.name                                             AS zone_name,
       o.vn                                                AS vn,
       COALESCE(el.leave::text, '')                        AS leave_flag
     FROM ovst o
