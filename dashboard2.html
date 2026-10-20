@@ -44,38 +44,32 @@ body {
   position: relative;
 }
 
-/* ── HOLOGRAM BACKGROUND — กลุ่มแสงสีเหลื่อมกัน (ฟ้า/ม่วง/ชมพู) ลอยและไล่สีช้าๆ
-   เหมือนแผ่นโฮโลแกรม พื้นฐานยังเป็น --bg สีเดียว ชั้นนี้แค่ลอยทับเป็นแสงเท่านั้น ── */
-#holoBg {
-  position: fixed; inset: -10%; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(circle at 18% 22%, rgba(56,226,255,.20), transparent 38%),
-    radial-gradient(circle at 82% 18%, rgba(167,139,250,.17), transparent 40%),
-    radial-gradient(circle at 72% 82%, rgba(244,114,182,.15), transparent 42%),
-    radial-gradient(circle at 15% 78%, rgba(96,165,250,.17), transparent 40%);
-  filter: blur(70px);
-  animation: holoDrift 20s ease-in-out infinite alternate;
+/* ── NETWORK BACKGROUND — ลายวงจรข้อมูล/เครือข่าย (จุดเชื่อมโยงด้วยเส้นบางๆ)
+   แบบอินโฟกราฟิกเทคโนโลยี พื้นฐานยังเป็น --bg สีเดียว ชั้นนี้แค่ลอยทับเป็นลวดลายเท่านั้น ── */
+#netBg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 90% 85% at 50% 40%, #000 0%, transparent 82%);
+          mask-image: radial-gradient(ellipse 90% 85% at 50% 40%, #000 0%, transparent 82%);
 }
-@keyframes holoDrift {
-  0%   { transform: translate(0,0) scale(1);      filter: blur(70px) hue-rotate(0deg); }
-  50%  { transform: translate(-2%, 2%) scale(1.06); filter: blur(80px) hue-rotate(20deg); }
-  100% { transform: translate(2%, -2%) scale(1);   filter: blur(70px) hue-rotate(-14deg); }
+#netBg svg { width: 100%; height: 100%; display: block; }
+#netBg .net-line  { stroke: rgba(56,226,255,.30); stroke-width: 1.3; }
+#netBg .net-line.v { stroke: rgba(167,139,250,.24); }
+#netBg .net-node  { fill: var(--cyan); animation: netTwinkle 4.5s ease-in-out infinite; }
+#netBg .net-node.v { fill: var(--violet); }
+#netBg .net-node.p { fill: #f472b6; }
+@keyframes netTwinkle {
+  0%, 100% { opacity: .35; r: 2.1; }
+  50%      { opacity: 1;   r: 3; }
 }
-
-/* ── แผ่นลายรุ้งเหลื่อมเฉียงแบบผิวโฮโลแกรม (foil sheen) — เลื่อนช้าๆ ไม่หยุดนิ่ง ── */
-#holoSheen {
-  position: fixed; inset: -300px; z-index: 0; pointer-events: none;
-  background: repeating-linear-gradient(115deg,
-    rgba(56,226,255,.05) 0px,  rgba(167,139,250,.05) 70px,
-    rgba(244,114,182,.05) 140px, rgba(96,165,250,.05) 210px,
-    rgba(56,226,255,.05) 280px);
-  mix-blend-mode: screen;
-  animation: holoSheenMove 16s linear infinite;
+/* เส้นแสงเลื่อนไหลตามเส้นวงจร — จำลองสัญญาณ/ข้อมูลวิ่งผ่านเครือข่าย
+   --len ต้องตั้งให้ใกล้เคียงความยาวเส้นจริง (ใส่ผ่าน style="--len:NN") เพื่อให้จุดแสงวิ่งครบเส้นพอดีแล้ววนใหม่ ── */
+#netBg .net-pulse {
+  stroke: var(--cyan); stroke-width: 2;
+  stroke-dasharray: 8 var(--len, 100);
+  filter: drop-shadow(0 0 3px var(--cyan));
+  animation: netPulseMove 4s linear infinite;
 }
-@keyframes holoSheenMove {
-  0%   { transform: translate(0,0); }
-  100% { transform: translate(220px, 140px); }
-}
+@keyframes netPulseMove { to { stroke-dashoffset: calc(-1 * (var(--len, 100) + 8)); } }
 
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
 
@@ -444,8 +438,38 @@ tbody tr:hover td { background: var(--surface-2); }
 </head>
 <body>
 
-<div id="holoBg"></div>
-<div id="holoSheen"></div>
+<div id="netBg">
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <pattern id="netTile" width="200" height="200" patternUnits="userSpaceOnUse">
+        <!-- เส้นเชื่อมจุด (วงจร/เครือข่ายข้อมูล) -->
+        <line class="net-line"   x1="25" y1="30"  x2="95"  y2="15"/>
+        <line class="net-line v" x1="95" y1="15"  x2="165" y2="45"/>
+        <line class="net-line"   x1="25" y1="30"  x2="55"  y2="95"/>
+        <line class="net-line"   x1="95" y1="15"  x2="55"  y2="95"/>
+        <line class="net-line"   x1="55" y1="95"  x2="135" y2="110"/>
+        <line class="net-line v" x1="165" y1="45" x2="135" y2="110"/>
+        <line class="net-line"   x1="135" y1="110" x2="180" y2="160"/>
+        <line class="net-line"   x1="55" y1="95"  x2="30"  y2="165"/>
+        <line class="net-line v" x1="30" y1="165" x2="100" y2="180"/>
+        <line class="net-line"   x1="135" y1="110" x2="100" y2="180"/>
+        <!-- จุดแสงวิ่งตามเส้น จำลองสัญญาณข้อมูล -->
+        <line class="net-pulse" style="--len:89"  x1="95"  y1="15"  x2="55"  y2="95"/>
+        <line class="net-pulse" style="--len:67"  x1="135" y1="110" x2="180" y2="160"/>
+        <!-- จุดเชื่อมโยง (node) -->
+        <circle class="net-node"   cx="25"  cy="30"  r="2.4" style="animation-delay:-.2s"/>
+        <circle class="net-node v" cx="95"  cy="15"  r="2.4" style="animation-delay:-1.4s"/>
+        <circle class="net-node"   cx="165" cy="45"  r="2.4" style="animation-delay:-2.6s"/>
+        <circle class="net-node p" cx="55"  cy="95"  r="2.4" style="animation-delay:-.8s"/>
+        <circle class="net-node"   cx="135" cy="110" r="2.4" style="animation-delay:-3.1s"/>
+        <circle class="net-node v" cx="180" cy="160" r="2.4" style="animation-delay:-1.9s"/>
+        <circle class="net-node"   cx="30"  cy="165" r="2.4" style="animation-delay:-2.3s"/>
+        <circle class="net-node p" cx="100" cy="180" r="2.4" style="animation-delay:-.5s"/>
+      </pattern>
+    </defs>
+    <rect width="1600" height="900" fill="url(#netTile)"/>
+  </svg>
+</div>
 
 <div id="hdr">
   <div class="hdr-left">
