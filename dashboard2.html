@@ -28,13 +28,13 @@
   --bad:       #fb7185;
   --hdr-font:  .72rem;   /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
   --data-font: .98rem;
-  --bg-glow:   #1a43a3;  /* สีกลางจอที่สว่างกว่า --bg (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
+  --bg-glow:   #1a326c;  /* สีกลางจอที่สว่างกว่า --bg เล็กน้อย (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
 }
 
 html, body {
-  /* พื้นหลังไล่เฉดแบบ "จุดสว่างกลางจอ" (spotlight/vignette) — สว่างตรงกลาง มืดลงที่ขอบ/มุมจอ
-     เหมือนภาพตัวอย่างจอ HUD เทคโนโลยี โดยสี glow กลางจอคำนวณจาก --bg ให้เข้าชุดกันเสมอ */
-  background: radial-gradient(ellipse 85% 75% at 50% 34%, var(--bg-glow), var(--bg) 72%);
+  /* พื้นหลังไล่เฉดแบบ "จุดสว่างกลางจอ" (spotlight/vignette) แบบเบาๆ — สีสม่ำเสมอกันทั้งจอมากขึ้น
+     ไม่ตัดกันจัดระหว่างกลาง-ขอบเหมือนก่อนหน้า โดยสี glow กลางจอคำนวณจาก --bg ให้เข้าชุดกันเสมอ */
+  background: radial-gradient(ellipse 95% 90% at 50% 32%, var(--bg-glow) 0%, var(--bg) 92%);
   color: var(--text);
   font-family: 'Segoe UI', 'Noto Sans Thai', 'Tahoma', sans-serif;
   height: 100%;
@@ -48,6 +48,10 @@ body {
 }
 
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
+
+/* ── มุมจอ HUD แบบวงจร/เกจวัดเล็กๆ ไว้ทั้ง 4 มุมจอ — ของตกแต่งเพิ่มความ "อนาคต"
+   อยู่ชั้นหลังสุด ไม่บังเนื้อหาตรงกลาง ── */
+#hudCorners { position: fixed; inset: 0; z-index: 0; pointer-events: none; width: 100%; height: 100%; }
 
 /* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
    ใช้เฉพาะแผงด้านข้าง (#side .panel) ไม่ใช้กับแผงตารางหลัก กันไปทับแถวข้อมูลที่เลื่อนอยู่ ── */
@@ -414,6 +418,26 @@ tbody tr:hover td { background: var(--surface-2); }
 </head>
 <body>
 
+<svg id="hudCorners" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <g id="hudCornerFrame">
+      <path d="M14 76 L14 26 Q14 14 26 14 L76 14" fill="none" stroke="var(--cyan)" stroke-width="1.6" opacity=".5"/>
+      <path d="M32 14 L118 14 L118 44 L152 44" fill="none" stroke="var(--cyan)" stroke-width="1.1" opacity=".35"/>
+      <path d="M14 92 L14 150" fill="none" stroke="var(--cyan)" stroke-width="1.1" opacity=".3" stroke-dasharray="2 5"/>
+      <circle cx="152" cy="44" r="3" fill="var(--cyan)" opacity=".75"/>
+      <circle cx="26" cy="14" r="2.3" fill="var(--violet)" opacity=".65"/>
+      <g transform="translate(50,92)" opacity=".45">
+        <circle r="14" fill="none" stroke="var(--cyan)" stroke-width="1.2"/>
+        <circle r="7.5" fill="none" stroke="var(--cyan)" stroke-width="1"/>
+        <line x1="0" y1="-14" x2="0" y2="-19" stroke="var(--cyan)" stroke-width="1.2"/>
+      </g>
+    </g>
+  </defs>
+  <use href="#hudCornerFrame" transform="translate(0,0)   scale(1,1)"/>
+  <use href="#hudCornerFrame" transform="translate(1600,0)  scale(-1,1)"/>
+  <use href="#hudCornerFrame" transform="translate(0,900)   scale(1,-1)"/>
+  <use href="#hudCornerFrame" transform="translate(1600,900) scale(-1,-1)"/>
+</svg>
 
 <div id="hdr">
   <div class="hdr-left">
@@ -968,7 +992,8 @@ function hslToHex(h, s, l) {
 }
 function glowColor(hex) {
   const [h, s, l] = hexToHsl(hex);
-  return hslToHex(h, Math.min(90, s+25), Math.min(52, l+26));
+  /* บูสต์เบาลงกว่าก่อนหน้า — ให้สีกลาง-ขอบจอสม่ำเสมอกันขึ้น ไม่ตัดกันจัดจนรู้สึกเป็นสองโทน */
+  return hslToHex(h, Math.min(75, s+14), Math.min(38, l+15));
 }
 
 function s2ApplyToDom() {
