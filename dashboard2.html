@@ -276,15 +276,11 @@ tbody tr:hover td { background: var(--surface-2); }
 /* ขนาดตัวอักษรด้านล่างนี้เป็น em — อ้างอิงสัดส่วนจาก --data-font ของ td แม่
    เพื่อให้ปรับ "ขนาดตัวอักษรข้อมูล" ในแผงตั้งค่าแล้วสเกลไปด้วยกันทั้งแถว */
 .td-time  { font-family:'Consolas','Courier New',monospace; color: var(--text-dim); font-weight:700; white-space:nowrap; font-size:.9em; }
-.td-hn    {
-  font-family:'Consolas','Courier New',monospace; color: var(--text-dim); white-space:nowrap; font-size:.84em;
-  background: var(--surface-2); border-radius: 6px; padding: 2px 7px; display:inline-block;
-}
 .name-cell { display: flex; align-items: center; gap: 10px; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: .84em; font-weight: 800; color: #0a0f1e;
+  font-size: 1.05em; line-height: 1;
   border: 2px solid rgba(255,255,255,.14);
 }
 .td-name  { font-weight: 700; }
@@ -482,8 +478,7 @@ tbody tr:hover td { background: var(--surface-2); }
         <thead>
           <tr>
             <th style="width:70px">เวลา</th>
-            <th style="width:100px">HN</th>
-            <th style="min-width:160px">ชื่อ-สกุล</th>
+            <th style="min-width:180px">ชื่อ-สกุล</th>
             <th style="width:230px">โซน</th>
             <th style="width:150px">สถานะ</th>
             <th style="width:84px; text-align:center">รอ (นาที)</th>
@@ -555,7 +550,7 @@ tbody tr:hover td { background: var(--surface-2); }
     </div>
 
     <div>
-      <div class="s2-sec-title">👤 ชื่อผู้ป่วย / HN</div>
+      <div class="s2-sec-title">👤 ชื่อผู้ป่วย</div>
       <label class="s2-check">
         <input type="checkbox" id="s2ChkMaskFirst" onchange="s2SetMaskFirst(this.checked)" />
         <div>
@@ -568,13 +563,6 @@ tbody tr:hover td { background: var(--surface-2); }
         <div>
           <div class="s2-check-label">มาสก์นามสกุล</div>
           <div class="s2-check-sub">ซ่อน 4 ตัวท้ายของนามสกุล</div>
-        </div>
-      </label>
-      <label class="s2-check">
-        <input type="checkbox" id="s2ChkMaskHn" onchange="s2SetMaskHn(this.checked)" />
-        <div>
-          <div class="s2-check-label">มาสก์ HN</div>
-          <div class="s2-check-sub">ซ่อน 4 ตัวท้ายของ HN</div>
         </div>
       </label>
     </div>
@@ -716,8 +704,8 @@ function tick() {
 }
 setInterval(tick, 1000); tick();
 
-/* ═══════════ NAME / HN MASKING — ซ่อนแค่ 4 ตัวท้าย (เหมือนหน้าจอมาตรฐาน) ═══════════ */
-let maskFirst = false, maskLast = false, maskHn = false;
+/* ═══════════ NAME MASKING — ซ่อนแค่ 4 ตัวท้าย (เหมือนหน้าจอมาตรฐาน) ═══════════ */
+let maskFirst = false, maskLast = false;
 function maskNamePart(s) { return s.length > 4 ? s.slice(0, -4) + 'XXXX' : 'XXXX'; }
 function maskPatientName(name) {
   if (!name || (!maskFirst && !maskLast)) return name;
@@ -727,15 +715,17 @@ function maskPatientName(name) {
   if (maskLast)  parts[parts.length-1] = maskNamePart(parts[parts.length-1]);
   return parts.join(' ');
 }
-function maskHnValue(hn) {
-  if (!hn || !maskHn) return hn;
-  return maskNamePart(hn);
-}
-function initials(name) {
-  const n = (name || '').trim();
-  if (!n) return '•';
-  const clean = n.replace(/^(นาย|นาง|นางสาว|เด็กชาย|เด็กหญิง|ด\.ช\.|ด\.ญ\.)/,'').trim();
-  return (clean[0] || n[0] || '•').toUpperCase();
+/* ── ไอคอนตามเพศ/คำนำหน้าชื่อ — เหมือนหน้าจอมาตรฐาน ใช้แทนคอลัมน์ HN ที่เอาออก ── */
+function genderIcon(name) {
+  if (!name || name === '—') return '🧑';
+  const n = name.trim();
+  if (n.startsWith('เด็กชาย') || n.startsWith('ด.ช.') || n.startsWith('ด.ช')) return '👦';
+  if (n.startsWith('เด็กหญิง')|| n.startsWith('ด.ญ.') || n.startsWith('ด.ญ')) return '👧';
+  if (n.startsWith('นาย'))    return '👨';
+  if (n.startsWith('นางสาว')) return '👩';
+  if (n.startsWith('นาง'))    return '👩';
+  if (n.startsWith('พระ')||n.startsWith('หลวง')||n.startsWith('สามเณร')) return '🧘';
+  return '🧑';
 }
 
 /* ═══════════ ZONE STRIP ═══════════ */
@@ -781,10 +771,9 @@ function renderTable(rows) {
     return `
       <tr>
         <td class="td-time">${r.time}</td>
-        <td><span class="td-hn">${maskHnValue(r.hn) || '–'}</span></td>
         <td>
           <div class="name-cell">
-            <div class="avatar" style="background:${color};color:${textOn(color)}">${initials(r.name)}</div>
+            <div class="avatar" style="background:${color};color:${textOn(color)}">${genderIcon(r.name)}</div>
             <span class="td-name">${maskPatientName(r.name) || '—'}</span>
           </div>
         </td>
@@ -907,7 +896,6 @@ const DEFAULT_S2 = {
   leaveInstant:  false,
   maskFirst:   false,
   maskLast:    false,
-  maskHn:      false,
   scrollSpeed: 18,   // px/วินาที (เทียบเท่า "ปานกลาง" ของหน้าจอมาตรฐาน)
   showSide:    true,
   hdrFontPx:   12,
@@ -950,7 +938,7 @@ let bgColor     = DEFAULT_S2.bgColor;
 function s2CurrentObj() {
   return {
     bgColor, zoneColors: { ...ZONE_COLOR }, refreshSecs: REFRESH,
-    leaveGraceMin, leaveInstant, maskFirst, maskLast, maskHn,
+    leaveGraceMin, leaveInstant, maskFirst, maskLast,
     scrollSpeed, showSide, hdrFontPx, dataFontPx,
   };
 }
@@ -965,7 +953,6 @@ function s2ApplyObj(s) {
   if (s.leaveInstant !== undefined)   leaveInstant = s.leaveInstant;
   if (s.maskFirst !== undefined)      maskFirst = s.maskFirst;
   if (s.maskLast !== undefined)       maskLast  = s.maskLast;
-  if (s.maskHn !== undefined)         maskHn    = s.maskHn;
   if (s.scrollSpeed !== undefined)    scrollSpeed = s.scrollSpeed;
   if (s.showSide !== undefined)       showSide = s.showSide;
   if (s.hdrFontPx !== undefined)      hdrFontPx = s.hdrFontPx;
@@ -1088,7 +1075,6 @@ function s2RenderPanelState() {
   document.getElementById('s2ChkLeaveInstant').checked = leaveInstant;
   document.getElementById('s2ChkMaskFirst').checked    = maskFirst;
   document.getElementById('s2ChkMaskLast').checked     = maskLast;
-  document.getElementById('s2ChkMaskHn').checked       = maskHn;
   document.getElementById('s2ChkSide').checked         = showSide;
   document.getElementById('s2HdrFontVal').textContent  = hdrFontPx;
   document.getElementById('s2DataFontVal').textContent = dataFontPx;
@@ -1113,7 +1099,6 @@ function s2SetLeaveInstant(v)   { leaveInstant = v; s2SaveLocal(); }
 function s2SetScroll(val)       { scrollSpeed = val; s2SaveLocal(); s2RenderPanelState(); startAutoScroll(); }
 function s2SetMaskFirst(v)      { maskFirst = v; s2SaveLocal(); rerenderAll(); }
 function s2SetMaskLast(v)       { maskLast  = v; s2SaveLocal(); rerenderAll(); }
-function s2SetMaskHn(v)         { maskHn    = v; s2SaveLocal(); rerenderAll(); }
 function s2SetShowSide(v)       { showSide = v; s2SaveLocal(); s2ApplyToDom(); }
 function s2AdjustFont(which, dir) {
   if (which === 'hdr')  hdrFontPx  = Math.min(20, Math.max(9,  hdrFontPx  + dir));
