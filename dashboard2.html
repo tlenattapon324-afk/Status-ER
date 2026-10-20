@@ -49,19 +49,20 @@ body {
 
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
 
-/* ── มุมจอ HUD แบบวงจร/เกจวัดเล็กๆ ไว้ทั้ง 4 มุมจอ — ของตกแต่งเพิ่มความ "อนาคต"
-   อยู่ชั้นหลังสุด ไม่บังเนื้อหาตรงกลาง ── */
-#hudCorners { position: fixed; inset: 0; z-index: 0; pointer-events: none; width: 100%; height: 100%; }
-
-/* ── วงแหวนเรดาร์ขนาดใหญ่ (hudRing) — หมุนช้าๆ คนละความเร็ว/ทิศ ให้ความรู้สึกมีมิติ/มีชีวิต ── */
-#hudRing {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; width: 100%; height: 100%;
-  filter: drop-shadow(0 0 26px rgba(56,226,255,.18));
+/* ── เส้นแสงฟ้าไซแอนนุ่มๆ ไว้ริมจอซ้าย-ขวา — สไตล์ "clean futuristic" เน้นพื้นที่ตรงกลางโล่ง
+   ไว้แสดงข้อมูล ไม่มีลวดลายซับซ้อนบังสายตา (แทนกรอบมุม HUD + วงแหวนใหญ่ชุดก่อนหน้าที่ดูรกไป) ── */
+#sideGlow { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+#sideGlow::before, #sideGlow::after {
+  content: ''; position: absolute; top: 8%; bottom: 8%; width: 2px;
+  background: linear-gradient(to bottom, transparent, var(--cyan) 15%, var(--cyan) 85%, transparent);
+  filter: blur(1px);
+  box-shadow: 0 0 22px 3px rgba(56,226,255,.30);
+  opacity: .4;
+  animation: sideGlowPulse 7s ease-in-out infinite;
 }
-#hudRing .ring-a { transform-origin: 0 0; animation: hudRingSpin 60s linear infinite; }
-#hudRing .ring-b { transform-origin: 0 0; animation: hudRingSpin 40s linear infinite reverse; }
-#hudRing .ring-c { transform-origin: 0 0; animation: hudRingSpin 80s linear infinite reverse; }
-@keyframes hudRingSpin { to { transform: rotate(360deg); } }
+#sideGlow::before { left: 16px; }
+#sideGlow::after  { right: 16px; animation-delay: 3.5s; }
+@keyframes sideGlowPulse { 0%, 100% { opacity: .25; } 50% { opacity: .55; } }
 
 /* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
    ใช้เฉพาะแผงด้านข้าง (#side .panel) ไม่ใช้กับแผงตารางหลัก กันไปทับแถวข้อมูลที่เลื่อนอยู่ ── */
@@ -430,50 +431,7 @@ tbody tr:hover td { background: var(--surface-2); }
 </head>
 <body>
 
-<svg id="hudCorners" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <g id="hudCornerFrame">
-      <path d="M14 76 L14 26 Q14 14 26 14 L76 14" fill="none" stroke="var(--cyan)" stroke-width="1.6" opacity=".5"/>
-      <path d="M32 14 L118 14 L118 44 L152 44" fill="none" stroke="var(--cyan)" stroke-width="1.1" opacity=".35"/>
-      <path d="M14 92 L14 150" fill="none" stroke="var(--cyan)" stroke-width="1.1" opacity=".3" stroke-dasharray="2 5"/>
-      <circle cx="152" cy="44" r="3" fill="var(--cyan)" opacity=".75"/>
-      <circle cx="26" cy="14" r="2.3" fill="var(--violet)" opacity=".65"/>
-      <g transform="translate(50,92)" opacity=".45">
-        <circle r="14" fill="none" stroke="var(--cyan)" stroke-width="1.2"/>
-        <circle r="7.5" fill="none" stroke="var(--cyan)" stroke-width="1"/>
-        <line x1="0" y1="-14" x2="0" y2="-19" stroke="var(--cyan)" stroke-width="1.2"/>
-      </g>
-    </g>
-  </defs>
-  <use href="#hudCornerFrame" transform="translate(0,0)   scale(1,1)"/>
-  <use href="#hudCornerFrame" transform="translate(1600,0)  scale(-1,1)"/>
-  <use href="#hudCornerFrame" transform="translate(0,900)   scale(1,-1)"/>
-  <use href="#hudCornerFrame" transform="translate(1600,900) scale(-1,-1)"/>
-</svg>
-
-<!-- ── วงแหวนเรดาร์/เกจขนาดใหญ่ มุมล่างซ้าย — องค์ประกอบหลักแบบจอ HUD เทคโนโลยี
-     ค่อนไปทางมุมจอ ให้ตารางข้อมูลตรงกลางยังอ่านง่าย ไม่บังข้อมูล ── -->
-<svg id="hudRing" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <g transform="translate(70,860)">
-    <g class="ring-a">
-      <circle r="400" fill="none" stroke="var(--cyan)" stroke-width="10" opacity=".07"/>
-      <circle r="400" fill="none" stroke="var(--cyan)" stroke-width="2.4" stroke-dasharray="46 20" opacity=".26"/>
-    </g>
-    <g class="ring-b">
-      <circle r="330" fill="none" stroke="var(--cyan)" stroke-width="1.6" stroke-dasharray="3 9" opacity=".30"/>
-    </g>
-    <circle r="275" fill="none" stroke="var(--violet)" stroke-width="1.2" opacity=".22"/>
-    <g class="ring-c">
-      <circle r="225" fill="none" stroke="var(--cyan)" stroke-width="16" stroke-dasharray="2.5 8" opacity=".16"/>
-    </g>
-    <circle r="160" fill="none" stroke="var(--cyan)" stroke-width="1.2" opacity=".32"/>
-    <circle r="62"  fill="none" stroke="var(--cyan)" stroke-width="1"   opacity=".38"/>
-    <g class="ring-b">
-      <circle cx="330" cy="0" r="4.5" fill="var(--cyan)" opacity=".65"/>
-      <circle cx="-280" cy="170" r="3" fill="var(--violet)" opacity=".5"/>
-    </g>
-  </g>
-</svg>
+<div id="sideGlow"></div>
 
 <div id="hdr">
   <div class="hdr-left">
