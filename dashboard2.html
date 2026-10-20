@@ -496,14 +496,14 @@ tbody tr:hover td { background: var(--surface-2); }
         <input type="checkbox" id="s2ChkMaskFirst" onchange="s2SetMaskFirst(this.checked)" />
         <div>
           <div class="s2-check-label">มาสก์ชื่อ</div>
-          <div class="s2-check-sub">ซ่อนท้ายชื่อ</div>
+          <div class="s2-check-sub">ซ่อน 4 ตัวท้ายของชื่อ</div>
         </div>
       </label>
       <label class="s2-check">
         <input type="checkbox" id="s2ChkMaskLast" onchange="s2SetMaskLast(this.checked)" />
         <div>
           <div class="s2-check-label">มาสก์นามสกุล</div>
-          <div class="s2-check-sub">ซ่อนท้ายนามสกุล</div>
+          <div class="s2-check-sub">ซ่อน 4 ตัวท้ายของนามสกุล</div>
         </div>
       </label>
     </div>
@@ -645,9 +645,9 @@ function tick() {
 }
 setInterval(tick, 1000); tick();
 
-/* ═══════════ NAME MASKING (ใช้ค่าเดียวกับหน้า Dashboard หลัก ถ้าตั้งไว้) ═══════════ */
+/* ═══════════ NAME MASKING — ซ่อนแค่ 4 ตัวท้าย (เหมือนหน้าจอมาตรฐาน) ═══════════ */
 let maskFirst = false, maskLast = false;
-function maskNamePart(s) { return s.length <= 1 ? s : s[0] + '•'.repeat(Math.min(s.length-1, 6)); }
+function maskNamePart(s) { return s.length > 4 ? s.slice(0, -4) + 'XXXX' : 'XXXX'; }
 function maskPatientName(name) {
   if (!name || (!maskFirst && !maskLast)) return name;
   const parts = name.trim().split(/\s+/);
