@@ -25,6 +25,8 @@
   --good:      #34d399;
   --warn:      #fbbf24;
   --bad:       #fb7185;
+  --hdr-font:  .72rem;   /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
+  --data-font: .98rem;
 }
 
 html, body {
@@ -119,6 +121,15 @@ body::after  { bottom: -280px; right: -160px; background: rgba(56,226,255,.12); 
 }
 #dateStr { font-size: .78rem; color: var(--text-dim); font-weight: 600; margin-top: 2px; }
 
+.gear-btn {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 1.15rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s, border-color .15s, transform .15s;
+}
+.gear-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-2); transform: rotate(25deg); }
+
 /* ── ZONE STRIP ── */
 #zones {
   display: grid;
@@ -186,7 +197,7 @@ thead th {
   background: rgba(4,20,44,.95);
   backdrop-filter: blur(8px);
   color: var(--text-faint);
-  font-size: .72rem; font-weight: 800;
+  font-size: var(--hdr-font); font-weight: 800;
   text-transform: uppercase; letter-spacing: .08em;
   text-align: left;
   padding: 12px 16px;
@@ -194,7 +205,7 @@ thead th {
 }
 tbody td {
   padding: 11px 16px;
-  font-size: .98rem;
+  font-size: var(--data-font);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
@@ -203,30 +214,32 @@ tbody tr:last-child td { border-bottom: none; }
 tbody tr { transition: background .12s; }
 tbody tr:hover td { background: var(--surface-2); }
 
-.td-time  { font-family:'Consolas','Courier New',monospace; color: var(--text-dim); font-weight:700; white-space:nowrap; font-size:.88rem; }
+/* ขนาดตัวอักษรด้านล่างนี้เป็น em — อ้างอิงสัดส่วนจาก --data-font ของ td แม่
+   เพื่อให้ปรับ "ขนาดตัวอักษรข้อมูล" ในแผงตั้งค่าแล้วสเกลไปด้วยกันทั้งแถว */
+.td-time  { font-family:'Consolas','Courier New',monospace; color: var(--text-dim); font-weight:700; white-space:nowrap; font-size:.9em; }
 .td-hn    {
-  font-family:'Consolas','Courier New',monospace; color: var(--text-dim); white-space:nowrap; font-size:.82rem;
+  font-family:'Consolas','Courier New',monospace; color: var(--text-dim); white-space:nowrap; font-size:.84em;
   background: var(--surface-2); border-radius: 6px; padding: 2px 7px; display:inline-block;
 }
 .name-cell { display: flex; align-items: center; gap: 10px; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: .82rem; font-weight: 800; color: #0a0f1e;
+  font-size: .84em; font-weight: 800; color: #0a0f1e;
   border: 2px solid rgba(255,255,255,.14);
 }
 .td-name  { font-weight: 700; }
 
 .zone-pill {
   display: inline-block;
-  font-size: .78rem; font-weight: 800;
+  font-size: .8em; font-weight: 800;
   padding: 4px 12px; border-radius: 999px;
   white-space: nowrap;
 }
-.status-cell { display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: .88rem; font-weight: 600; }
+.status-cell { display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: .9em; font-weight: 600; }
 .status-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .wait-chip {
-  font-size: .78rem; font-weight: 800; padding: 3px 10px; border-radius: 7px;
+  font-size: .8em; font-weight: 800; padding: 3px 10px; border-radius: 7px;
   white-space: nowrap; font-variant-numeric: tabular-nums;
 }
 
@@ -279,6 +292,78 @@ tbody tr:hover td { background: var(--surface-2); }
   color: var(--cyan); background: rgba(34,211,238,.10); border-color: rgba(34,211,238,.25);
   font-variant-numeric: tabular-nums;
 }
+
+/* ── S2 SETTINGS PANEL — ตั้งค่าของหน้าจอนี้โดยเฉพาะ (แยกจากหน้าจอมาตรฐาน) ── */
+#s2Overlay {
+  position: fixed; inset: 0; background: rgba(2,8,20,.55); backdrop-filter: blur(2px);
+  z-index: 60; opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+#s2Overlay.open { opacity: 1; pointer-events: auto; }
+#s2Panel {
+  position: fixed; top: 0; right: 0; height: 100%; width: 340px; z-index: 61;
+  background: #0a2a54; border-left: 1px solid var(--border-2);
+  box-shadow: -20px 0 60px rgba(0,0,0,.45);
+  transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+}
+#s2Panel.open { transform: translateX(0); }
+.s2-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.s2-hdr-title { font-weight: 800; color: var(--text); font-size: .95rem; }
+.s2-hdr-sub { font-size: .7rem; color: var(--text-faint); margin-top: 1px; }
+.s2-close {
+  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--surface); color: var(--text-dim); font-weight: 800; font-size: 1rem;
+}
+.s2-body { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 18px; }
+.s2-sec-title { font-size: .7rem; font-weight: 800; color: var(--text-faint); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+.s2-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.s2-grid.cols2 { grid-template-columns: repeat(2, 1fr); }
+.s2-grid.cols4 { grid-template-columns: repeat(4, 1fr); }
+.s2-opt {
+  padding: 8px 4px; border-radius: 9px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-dim); font-size: .78rem; font-weight: 700;
+  cursor: pointer; text-align: center; transition: all .15s;
+}
+.s2-opt:hover  { border-color: var(--border-2); color: var(--text); }
+.s2-opt.active { background: var(--cyan); border-color: var(--cyan); color: #04202c; }
+.s2-check {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px;
+  cursor: pointer; transition: background .15s;
+}
+.s2-check:hover { background: var(--surface); }
+.s2-check input { width: 16px; height: 16px; accent-color: var(--cyan); cursor: pointer; flex-shrink: 0; }
+.s2-check-label { font-size: .82rem; font-weight: 700; color: var(--text); }
+.s2-check-sub { font-size: .7rem; color: var(--text-faint); margin-top: 1px; }
+.s2-fontctl { display: flex; align-items: center; gap: 10px; }
+.s2-fnt-btn {
+  width: 32px; height: 32px; border-radius: 9px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 1.1rem; font-weight: 800; cursor: pointer; flex-shrink: 0;
+}
+.s2-fnt-btn:hover { border-color: var(--border-2); background: var(--surface-2); }
+.s2-fnt-val { flex: 1; text-align: center; font-weight: 900; color: var(--text); }
+.s2-color-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: 10px; background: var(--surface); margin-bottom: 7px;
+}
+.s2-color-row:last-child { margin-bottom: 0; }
+.s2-swatch { width: 26px; height: 26px; border-radius: 8px; border: 2px solid rgba(255,255,255,.18); flex-shrink: 0; }
+.s2-color-label { font-size: .78rem; font-weight: 700; color: var(--text); flex: 1; min-width: 0; margin: 0 10px; }
+.s2-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.s2-preset { width: 26px; height: 26px; border-radius: 8px; border: 2px solid rgba(255,255,255,.15); cursor: pointer; flex-shrink: 0; transition: transform .12s; }
+.s2-preset:hover { transform: scale(1.12); }
+.s2-preset.active { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(34,211,238,.35); }
+.s2-btn {
+  width: 100%; padding: 11px; border-radius: 12px; font-weight: 700; font-size: .85rem; cursor: pointer;
+  transition: all .15s;
+}
+.s2-btn-save  { background: rgba(34,211,238,.14); border: 1.5px solid var(--cyan); color: var(--cyan); }
+.s2-btn-save:hover { background: rgba(34,211,238,.22); }
+.s2-btn-reset { background: transparent; border: 1.5px dashed var(--border-2); color: var(--text-faint); margin-top: 8px; }
+.s2-btn-reset:hover { border-color: var(--border-2); color: var(--text-dim); }
+.s2-foot { padding: 10px 18px; border-top: 1px solid var(--border); text-align: center; font-size: .68rem; color: var(--text-faint); flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -302,9 +387,12 @@ tbody tr:hover td { background: var(--surface-2); }
       <span id="totalLbl">ราย ในห้อง ER</span>
     </div>
   </div>
-  <div class="hdr-right">
-    <div id="clock">00:00:00</div>
-    <div id="dateStr"></div>
+  <div class="hdr-right" style="display:flex;align-items:center;gap:16px">
+    <div>
+      <div id="clock">00:00:00</div>
+      <div id="dateStr"></div>
+    </div>
+    <button class="gear-btn" onclick="openS2Settings()" title="ตั้งค่าหน้าจอนี้">⚙</button>
   </div>
 </div>
 
@@ -354,6 +442,113 @@ tbody tr:hover td { background: var(--surface-2); }
   <div class="chip" id="ftCd">↺ –</div>
 </div>
 
+<!-- ── S2 Settings Panel — ตั้งค่าเฉพาะหน้าจอนี้ แยกจากหน้าจอมาตรฐาน ── -->
+<div id="s2Overlay" onclick="closeS2Settings()"></div>
+<aside id="s2Panel">
+  <div class="s2-hdr">
+    <div>
+      <div class="s2-hdr-title">⚙ ตั้งค่าหน้าจอนี้</div>
+      <div class="s2-hdr-sub">แยกจากการตั้งค่าของหน้าจอมาตรฐาน</div>
+    </div>
+    <button class="s2-close" onclick="closeS2Settings()">×</button>
+  </div>
+
+  <div class="s2-body">
+
+    <div>
+      <div class="s2-sec-title">🔄 การรีเฟรช</div>
+      <div class="s2-grid" id="s2RefreshOpts"></div>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">⏱ เวลาดีดออกจากห้อง ER</div>
+      <div class="s2-grid" id="s2LeaveGraceOpts"></div>
+      <label class="s2-check" style="margin-top:6px">
+        <input type="checkbox" id="s2ChkLeaveInstant" onchange="s2SetLeaveInstant(this.checked)" />
+        <div>
+          <div class="s2-check-label">ดีดออกทันทีเมื่อสถานะเป็น Y</div>
+          <div class="s2-check-sub">ไม่รอเวลาด้านบน</div>
+        </div>
+      </label>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">🐢 ความเร็วเลื่อนตาราง</div>
+      <div class="s2-grid" id="s2ScrollOpts"></div>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">👤 ชื่อผู้ป่วย</div>
+      <label class="s2-check">
+        <input type="checkbox" id="s2ChkMaskFirst" onchange="s2SetMaskFirst(this.checked)" />
+        <div>
+          <div class="s2-check-label">มาสก์ชื่อ</div>
+          <div class="s2-check-sub">ซ่อนท้ายชื่อ</div>
+        </div>
+      </label>
+      <label class="s2-check">
+        <input type="checkbox" id="s2ChkMaskLast" onchange="s2SetMaskLast(this.checked)" />
+        <div>
+          <div class="s2-check-label">มาสก์นามสกุล</div>
+          <div class="s2-check-sub">ซ่อนท้ายนามสกุล</div>
+        </div>
+      </label>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">📊 แผงด้านข้าง</div>
+      <label class="s2-check">
+        <input type="checkbox" id="s2ChkSide" onchange="s2SetShowSide(this.checked)" />
+        <div>
+          <div class="s2-check-label">แสดงสถานะผู้ป่วย / เวลารอ</div>
+          <div class="s2-check-sub">ปิดได้ถ้าจอแคบ อยากให้ตารางเต็มจอ</div>
+        </div>
+      </label>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">🔤 ขนาดตัวอักษรหัวตาราง</div>
+      <div class="s2-fontctl">
+        <button class="s2-fnt-btn" onclick="s2AdjustFont('hdr',-1)">−</button>
+        <div class="s2-fnt-val"><span id="s2HdrFontVal">12</span><span style="font-size:.7rem;color:var(--text-faint)"> px</span></div>
+        <button class="s2-fnt-btn" onclick="s2AdjustFont('hdr',1)">+</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">🔡 ขนาดตัวอักษรข้อมูล</div>
+      <div class="s2-fontctl">
+        <button class="s2-fnt-btn" onclick="s2AdjustFont('data',-1)">−</button>
+        <div class="s2-fnt-val"><span id="s2DataFontVal">16</span><span style="font-size:.7rem;color:var(--text-faint)"> px</span></div>
+        <button class="s2-fnt-btn" onclick="s2AdjustFont('data',1)">+</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">🖥 สีพื้นหลัง</div>
+      <div class="s2-color-row">
+        <div class="s2-swatch" id="s2SwatchBg"></div>
+        <div class="s2-color-label">สีพื้นหลัง (โทนไอที)</div>
+        <input type="color" id="s2BgPicker" oninput="s2LiveBg(this.value)" style="width:30px;height:30px;border:none;background:none;cursor:pointer" />
+      </div>
+      <div class="s2-presets" id="s2BgPresets"></div>
+    </div>
+
+    <div>
+      <div class="s2-sec-title">🎨 สีโซน</div>
+      <div id="s2ColorPickers"></div>
+    </div>
+
+    <div>
+      <button class="s2-btn s2-btn-save" onclick="s2SaveAsDefault()" id="s2BtnSave">💾 บันทึกเป็น Default (ใช้ร่วมกันทุกเครื่อง)</button>
+      <button class="s2-btn s2-btn-reset" onclick="s2ResetAll()">↩ รีเซ็ตทั้งหมด</button>
+    </div>
+
+  </div>
+
+  <div class="s2-foot">การตั้งค่านี้แยกจากหน้าจอมาตรฐานโดยสิ้นเชิง</div>
+</aside>
+
 <script>
 /* ═══════════ CONFIG ═══════════
    ชื่อ/สีสำรอง ใช้ตอนฐานข้อมูลไม่มีชื่อโซน (er_emergency_type.name) ── */
@@ -364,7 +559,8 @@ const ZONE_FALLBACK = {
   4: 'โซนเขียว (Semi-Urgent)',
   5: 'โซนขาว (Non-Urgent)',
 };
-const ZONE_COLOR    = { 1:'#ef4444', 2:'#f472b6', 3:'#facc15', 4:'#4ade80', 5:'#e2e8f0' };
+const DEFAULT_ZONE_COLOR = { 1:'#ef4444', 2:'#f472b6', 3:'#facc15', 4:'#4ade80', 5:'#e2e8f0' };
+let   ZONE_COLOR    = { ...DEFAULT_ZONE_COLOR };  /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
 const ZONE_MAX_WAIT = { 1:0, 2:15, 3:30, 4:60, 5:120 };
 
 const STATUS = {
@@ -541,21 +737,41 @@ function renderWaitList(zWaits, zNames) {
 
 /* ═══════════ AUTO SCROLL (เลื่อนช้าๆ วนลูป เมื่อรายการยาวเกินจอ) ═══════════ */
 let scrollTimer = null;
+const SCROLL_TICK_MS = 45;
 function startAutoScroll() {
   clearInterval(scrollTimer);
   const el = document.getElementById('tableScroll');
   let dir = 1;
+  const step = Math.max(.3, (typeof scrollSpeed === 'number' ? scrollSpeed : 18) * SCROLL_TICK_MS / 1000);
   scrollTimer = setInterval(() => {
     if (el.scrollHeight <= el.clientHeight + 4) return;
-    el.scrollTop += dir;
+    el.scrollTop += dir * step;
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) dir = -1;
     else if (el.scrollTop <= 0) dir = 1;
-  }, 45);
+  }, SCROLL_TICK_MS);
 }
 
 /* ═══════════ FETCH ═══════════ */
 let REFRESH = 30, cd = 30, cdInterval = null;
 const API_HEADERS = window.__API_TOKEN__ ? { 'X-API-Token': window.__API_TOKEN__ } : {};
+
+/* ── เวลาดีดผู้ป่วยออกจากห้อง ER (leave='Y') — เหมือนกับหน้าจอมาตรฐาน แต่เป็นค่าของหน้านี้เอง ── */
+let leaveGraceMin  = 5;
+let LEAVE_GRACE_MS = leaveGraceMin * 60 * 1000;
+let leaveInstant   = false;
+const leaveTimestamps = {}; // { patientId: timestamp เมื่อ leave='Y' ครั้งแรก }
+
+/* ── cache ข้อมูลล่าสุดที่ fetch มา — ใช้ render ซ้ำตอนปรับสี/ฟอนต์/มาสก์ชื่อ
+   โดยไม่ต้องรอ fetch รอบใหม่ ── */
+let lastRenderData = null;
+function rerenderAll() {
+  if (!lastRenderData) return;
+  const { zCounts, zNames, rows, sCounts, zWaits, activeTotal } = lastRenderData;
+  renderZones(zCounts, zNames, activeTotal);
+  renderTable(rows);
+  renderStatusList(sCounts);
+  renderWaitList(zWaits, zNames);
+}
 
 /* ── กลับไปหน้าจอมาตรฐาน — บันทึกค่า activeScreen ไว้ด้วย เพื่อให้ปุ่ม/ลิงก์อื่นๆ
    (หน้าแรก, หลังบันทึกค่าเชื่อมต่อ) พากลับมาหน้านี้แทนอัตโนมัติในครั้งถัดไป ── */
@@ -572,16 +788,187 @@ async function switchToClassic() {
   location.href = '/dashboard.html';
 }
 
-async function loadMaskSettings() {
+/* ═══════════════════════════════════════════════════════════════
+   S2 SETTINGS — การตั้งค่าเฉพาะหน้าจอนี้ แยกจากหน้าจอมาตรฐานโดยสิ้นเชิง
+   เก็บไว้ที่ user-defaults.json ใต้คีย์ "screen2" (ไม่แตะคีย์ระดับบนที่
+   หน้าจอมาตรฐานใช้ เช่น colors/bgColor/refreshSecs — กันค่าชนกัน) และ
+   เก็บสำเนาไว้ใน localStorage คนละ key กับหน้าจอมาตรฐานด้วย
+   ═══════════════════════════════════════════════════════════════ */
+const S2_STORAGE_KEY = 'erStatus_screen2_v1';
+const DEFAULT_S2 = {
+  bgColor:     '#0b3d78',
+  zoneColors:  { ...DEFAULT_ZONE_COLOR },
+  refreshSecs: 30,
+  leaveGraceMin: 5,
+  leaveInstant:  false,
+  maskFirst:   false,
+  maskLast:    false,
+  scrollSpeed: 18,   // px/วินาที (เทียบเท่า "ปานกลาง" ของหน้าจอมาตรฐาน)
+  showSide:    true,
+  hdrFontPx:   12,
+  dataFontPx:  16,
+};
+const S2_REFRESH_OPTS = [
+  { label:'15 วิ.',  val:15  }, { label:'30 วิ.',  val:30  }, { label:'1 นาที', val:60  },
+  { label:'2 นาที', val:120 }, { label:'5 นาที', val:300 }, { label:'ปิด',    val:0   },
+];
+const S2_LEAVE_GRACE_OPTS = [
+  { label:'1 นาที',  val:1  }, { label:'3 นาที',  val:3  }, { label:'5 นาที',  val:5  },
+  { label:'10 นาที', val:10 }, { label:'15 นาที', val:15 }, { label:'30 นาที', val:30 },
+];
+const S2_SCROLL_OPTS = [
+  { label:'ช้ามาก', val:6 }, { label:'ช้า', val:10 }, { label:'ปานกลาง', val:18 }, { label:'เร็ว', val:30 },
+];
+const S2_BG_PRESETS = [
+  { hex:'#0b3d78', label:'ฟ้าน้ำเงิน' },
+  { hex:'#0a2f63', label:'น้ำเงินเข้ม' },
+  { hex:'#0369a1', label:'ฟ้าสด' },
+  { hex:'#1e3a8a', label:'อินดิโก้' },
+  { hex:'#0e7490', label:'ฟ้าอมเขียว' },
+  { hex:'#312e81', label:'ม่วงน้ำเงิน' },
+];
+
+let scrollSpeed = DEFAULT_S2.scrollSpeed;
+let showSide    = DEFAULT_S2.showSide;
+let hdrFontPx   = DEFAULT_S2.hdrFontPx;
+let dataFontPx  = DEFAULT_S2.dataFontPx;
+let bgColor     = DEFAULT_S2.bgColor;
+
+function s2CurrentObj() {
+  return {
+    bgColor, zoneColors: { ...ZONE_COLOR }, refreshSecs: REFRESH,
+    leaveGraceMin, leaveInstant, maskFirst, maskLast,
+    scrollSpeed, showSide, hdrFontPx, dataFontPx,
+  };
+}
+
+/* ── ใช้ค่า settings object (จาก server หรือ localStorage) เข้ากับตัวแปร + หน้าจอจริง ── */
+function s2ApplyObj(s) {
+  if (!s) return;
+  if (s.bgColor)                      bgColor = s.bgColor;
+  if (s.zoneColors)                   ZONE_COLOR = { ...DEFAULT_ZONE_COLOR, ...s.zoneColors };
+  if (s.refreshSecs !== undefined)    REFRESH = s.refreshSecs;
+  if (s.leaveGraceMin !== undefined)  { leaveGraceMin = s.leaveGraceMin; LEAVE_GRACE_MS = leaveGraceMin * 60 * 1000; }
+  if (s.leaveInstant !== undefined)   leaveInstant = s.leaveInstant;
+  if (s.maskFirst !== undefined)      maskFirst = s.maskFirst;
+  if (s.maskLast !== undefined)       maskLast  = s.maskLast;
+  if (s.scrollSpeed !== undefined)    scrollSpeed = s.scrollSpeed;
+  if (s.showSide !== undefined)       showSide = s.showSide;
+  if (s.hdrFontPx !== undefined)      hdrFontPx = s.hdrFontPx;
+  if (s.dataFontPx !== undefined)     dataFontPx = s.dataFontPx;
+  s2ApplyToDom();
+}
+
+function s2ApplyToDom() {
+  document.documentElement.style.setProperty('--bg', bgColor);
+  document.documentElement.style.setProperty('--hdr-font', hdrFontPx + 'px');
+  document.documentElement.style.setProperty('--data-font', dataFontPx + 'px');
+  document.getElementById('main').style.gridTemplateColumns = showSide ? '1fr 300px' : '1fr';
+  document.getElementById('side').style.display = showSide ? '' : 'none';
+}
+
+function s2SaveLocal() {
+  try { localStorage.setItem(S2_STORAGE_KEY, JSON.stringify(s2CurrentObj())); } catch {}
+}
+
+/* 1) ค่า default จาก server (ใช้ร่วมกันทุกเครื่อง) → 2) ค่าที่ปรับเองในเบราว์เซอร์นี้ทับอีกที */
+async function loadS2Settings() {
   try {
     const r = await fetch('/api/defaults');
     const d = await r.json();
-    if (d.ok && d.defaults) {
-      if (d.defaults.maskFirst !== undefined) maskFirst = d.defaults.maskFirst;
-      if (d.defaults.maskLast  !== undefined) maskLast  = d.defaults.maskLast;
-      else if (d.defaults.maskName !== undefined) { maskFirst = d.defaults.maskName; maskLast = d.defaults.maskName; }
-    }
+    if (d.ok && d.defaults?.screen2) s2ApplyObj(d.defaults.screen2);
   } catch {}
+  try {
+    s2ApplyObj(JSON.parse(localStorage.getItem(S2_STORAGE_KEY) || 'null'));
+  } catch {}
+}
+
+/* บันทึกเป็น default กลาง — merge กับค่า server เดิมทั้งหมด เปลี่ยนแค่คีย์ "screen2"
+   กันไปทับ activeScreen หรือค่าตั้งค่าของหน้าจอมาตรฐาน (colors/bgColor/...) ── */
+async function s2SaveAsDefault() {
+  const btn = document.getElementById('s2BtnSave');
+  const label = btn.textContent;
+  try {
+    const r = await fetch('/api/defaults');
+    const d = await r.json();
+    const existing = d?.defaults || {};
+    const merged = { ...existing, screen2: s2CurrentObj() };
+    const resp = await fetch('/api/defaults', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(merged),
+    });
+    const dd = await resp.json();
+    if (dd.ok) { btn.textContent = '✅ บันทึกแล้ว'; setTimeout(() => { btn.textContent = label; }, 2000); }
+  } catch (e) {
+    alert('บันทึกไม่สำเร็จ: ' + e.message);
+  }
+}
+
+function s2ResetAll() {
+  if (!confirm('รีเซ็ตการตั้งค่าหน้าจอนี้ทั้งหมดกลับเป็นค่าเริ่มต้น?')) return;
+  s2ApplyObj(DEFAULT_S2);
+  s2SaveLocal();
+  s2RenderPanelState();
+  rerenderAll();
+}
+
+/* ── Panel open/close ── */
+function openS2Settings() {
+  document.getElementById('s2Panel').classList.add('open');
+  document.getElementById('s2Overlay').classList.add('open');
+  s2RenderPanelState();
+}
+function closeS2Settings() {
+  document.getElementById('s2Panel').classList.remove('open');
+  document.getElementById('s2Overlay').classList.remove('open');
+}
+
+/* ── วาดสถานะทุกตัวเลือกในแผงให้ตรงกับค่าปัจจุบัน ── */
+function s2RenderPanelState() {
+  document.getElementById('s2RefreshOpts').innerHTML = S2_REFRESH_OPTS.map(o => `
+    <button class="s2-opt ${o.val===REFRESH?'active':''}" onclick="s2SetRefresh(${o.val})">${o.label}</button>`).join('');
+  document.getElementById('s2LeaveGraceOpts').innerHTML = S2_LEAVE_GRACE_OPTS.map(o => `
+    <button class="s2-opt ${o.val===leaveGraceMin?'active':''}" onclick="s2SetLeaveGrace(${o.val})">${o.label}</button>`).join('');
+  document.getElementById('s2ScrollOpts').innerHTML = S2_SCROLL_OPTS.map(o => `
+    <button class="s2-opt ${o.val===scrollSpeed?'active':''}" onclick="s2SetScroll(${o.val})">${o.label}</button>`).join('');
+  document.getElementById('s2ChkLeaveInstant').checked = leaveInstant;
+  document.getElementById('s2ChkMaskFirst').checked    = maskFirst;
+  document.getElementById('s2ChkMaskLast').checked     = maskLast;
+  document.getElementById('s2ChkSide').checked         = showSide;
+  document.getElementById('s2HdrFontVal').textContent  = hdrFontPx;
+  document.getElementById('s2DataFontVal').textContent = dataFontPx;
+  document.getElementById('s2SwatchBg').style.background = bgColor;
+  document.getElementById('s2BgPicker').value = bgColor;
+  document.getElementById('s2BgPresets').innerHTML = S2_BG_PRESETS.map(p => `
+    <div class="s2-preset ${p.hex.toLowerCase()===bgColor.toLowerCase()?'active':''}"
+         style="background:${p.hex}" title="${p.label}" onclick="s2PickBgPreset('${p.hex}')"></div>`).join('');
+  document.getElementById('s2ColorPickers').innerHTML = [1,2,3,4,5].map(lv => `
+    <div class="s2-color-row">
+      <div class="s2-swatch" style="background:${ZONE_COLOR[lv]}"></div>
+      <div class="s2-color-label">${ZONE_FALLBACK[lv].split(' (')[0]}</div>
+      <input type="color" value="${ZONE_COLOR[lv]}" style="width:28px;height:28px;border:none;background:none;cursor:pointer"
+             oninput="s2LiveZoneColor(${lv}, this.value)" />
+    </div>`).join('');
+}
+
+/* ── Setters (ทุกตัวปรับแล้วมีผลทันที + บันทึกลง localStorage ของหน้าจอนี้) ── */
+function s2SetRefresh(val)      { REFRESH = val; cd = val; s2SaveLocal(); s2RenderPanelState(); startCd(); }
+function s2SetLeaveGrace(val)   { leaveGraceMin = val; LEAVE_GRACE_MS = val*60*1000; s2SaveLocal(); s2RenderPanelState(); }
+function s2SetLeaveInstant(v)   { leaveInstant = v; s2SaveLocal(); }
+function s2SetScroll(val)       { scrollSpeed = val; s2SaveLocal(); s2RenderPanelState(); startAutoScroll(); }
+function s2SetMaskFirst(v)      { maskFirst = v; s2SaveLocal(); rerenderAll(); }
+function s2SetMaskLast(v)       { maskLast  = v; s2SaveLocal(); rerenderAll(); }
+function s2SetShowSide(v)       { showSide = v; s2SaveLocal(); s2ApplyToDom(); }
+function s2AdjustFont(which, dir) {
+  if (which === 'hdr')  hdrFontPx  = Math.min(20, Math.max(9,  hdrFontPx  + dir));
+  else                  dataFontPx = Math.min(32, Math.max(11, dataFontPx + dir));
+  s2ApplyToDom(); s2SaveLocal(); s2RenderPanelState();
+}
+function s2LiveBg(hex)          { bgColor = hex; s2ApplyToDom(); s2SaveLocal(); s2RenderPanelState(); }
+function s2PickBgPreset(hex)    { s2LiveBg(hex); }
+function s2LiveZoneColor(lv, hex) {
+  ZONE_COLOR = { ...ZONE_COLOR, [lv]: hex };
+  s2SaveLocal(); s2RenderPanelState(); rerenderAll();
 }
 
 async function load() {
@@ -598,13 +985,27 @@ async function load() {
     const rows = [];
     let leaveCount = 0;
     const now = Date.now();
+    const seenIds = new Set();
 
     (json.data||[]).forEach(row => {
       const lv = Math.min(Math.max(parseInt(row.triage_level)||5,1),5);
       const isLeave = (row.leave_flag||'').trim().toUpperCase() === 'Y';
       const zn = (row.zone_name||'').toString().trim();
       if (zn && !zNames[lv]) zNames[lv] = zn;
-      if (isLeave) { leaveCount++; return; }
+
+      const hn = (row.hn||'').toString().trim().replace(/\s/g,'');
+      const id = hn ? `HN${hn}` : `VN${row.vn||Math.random()}`;
+      seenIds.add(id);
+
+      if (isLeave) {
+        leaveCount++;
+        if (!leaveTimestamps[id]) leaveTimestamps[id] = now;
+        const elapsed = now - leaveTimestamps[id];
+        /* ยังไม่พ้นเวลาที่ตั้งไว้ → ยังคงแสดงในตาราง/จำนวนโซนต่อ (เหมือนหน้าจอมาตรฐาน) */
+        if (leaveInstant || elapsed >= LEAVE_GRACE_MS) return;
+      } else {
+        delete leaveTimestamps[id];
+      }
 
       zCounts[lv]++;
       const sk = mapStatus(row.status_name);
@@ -627,11 +1028,17 @@ async function load() {
       });
     });
 
+    /* ล้าง timestamp ของคนไข้ที่หายออกจาก DB แล้ว (ไม่ใช่แค่ leave='Y' แต่ record หายไปเลย) */
+    Object.keys(leaveTimestamps).forEach(id => {
+      if (!seenIds.has(id)) delete leaveTimestamps[id];
+    });
+
     rows.sort((a,b) => a.lv - b.lv || a._sortTime.localeCompare(b._sortTime));
 
     const activeTotal = rows.length;
     document.getElementById('totalNum').textContent = activeTotal;
 
+    lastRenderData = { zCounts, zNames, rows, sCounts, zWaits, activeTotal };
     renderZones(zCounts, zNames, activeTotal);
     renderTable(rows);
     renderStatusList(sCounts);
@@ -665,7 +1072,8 @@ function startCd() {
 }
 
 (async function init() {
-  await loadMaskSettings();
+  await loadS2Settings();
+  s2ApplyToDom();
   await load();
   startCd();
 })();

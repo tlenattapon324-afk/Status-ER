@@ -1620,10 +1620,18 @@ async function loadSettings() {
 }
 async function saveAsDefault() {
   try {
+    /* merge กับค่าที่มีอยู่แล้วบน server ก่อนเขียนทับ — กัน activeScreen / ค่าของหน้าจอใหม่
+       (dashboard2.html เก็บไว้ใน key "screen2") หายไปตอนกดบันทึกจากหน้านี้ */
+    let existing = {};
+    try {
+      const er = await fetch('/api/defaults');
+      const ed = await er.json();
+      existing = ed?.defaults || {};
+    } catch {}
     const resp = await fetch('/api/defaults', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(currentSettingsObj())
+      body: JSON.stringify({ ...existing, ...currentSettingsObj() })
     });
     const d = await resp.json();
     if (d.ok) {
