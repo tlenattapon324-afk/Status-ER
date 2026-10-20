@@ -52,7 +52,46 @@ body::before, body::after {
 body::before { top: -260px; left: -160px;  background: rgba(255,255,255,.07); }
 body::after  { bottom: -280px; right: -160px; background: rgba(56,226,255,.12); }
 
+/* ── HUD GRID — ลายตารางจางๆ แบบจอ control room/sci-fi ไม่กระทบความเป็น "พื้นสีเดียว" เพราะอยู่ชั้นบนสุด
+   เป็นแค่ลายเส้นบางๆ ไม่ใช่สีพื้นหลังอีกสี ── */
+#hudGrid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(56,226,255,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,226,255,.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 15%, #000 0%, transparent 78%);
+          mask-image: radial-gradient(ellipse 85% 70% at 50% 15%, #000 0%, transparent 78%);
+}
+
+/* ── HUD SCAN — เส้นแสงกวาดขึ้น-ลงเบาๆ ให้ความรู้สึกจอ "กำลังสแกน/live" แบบห้องควบคุม ── */
+#hudScan { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+#hudScan::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -160px; height: 160px;
+  background: linear-gradient(to bottom, transparent, rgba(56,226,255,.10), transparent);
+  animation: hudScanMove 7s linear infinite;
+}
+@keyframes hudScanMove {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(calc(100vh + 160px)); }
+}
+
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
+
+/* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
+   ใช้เฉพาะแผงด้านข้าง (#side .panel) ไม่ใช้กับแผงตารางหลัก กันไปทับแถวข้อมูลที่เลื่อนอยู่ ── */
+#side .panel { position: relative; }
+#side .panel::before, #side .panel::after {
+  content: ''; position: absolute; width: 14px; height: 14px; pointer-events: none; z-index: 2;
+}
+#side .panel::before {
+  top: 8px; left: 8px; opacity: .55;
+  border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); border-radius: 3px 0 0 0;
+}
+#side .panel::after {
+  bottom: 8px; right: 8px; opacity: .55;
+  border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); border-radius: 0 0 3px 0;
+}
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
@@ -104,15 +143,28 @@ body::after  { bottom: -280px; right: -160px; background: rgba(56,226,255,.12); 
   font-size: .72rem; font-weight: 800; color: var(--text-faint);
   text-transform: uppercase; letter-spacing: .22em; margin-bottom: 7px;
 }
+/* ── วงแหวนเรืองแสงรอบจำนวนผู้ป่วยรวม — เอฟเฟกต์ scanning ring แบบจอ HUD ── */
 #totalBadge {
-  display: inline-flex; align-items: baseline; gap: 8px;
-  background: var(--surface-2); border: 1px solid var(--border-2);
-  color: var(--text); border-radius: 14px; padding: 7px 24px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  position: relative; width: 94px; height: 94px; margin: 0 auto;
+  border-radius: 50%;
+  border: 2px solid rgba(56,226,255,.22);
+  box-shadow: 0 0 26px rgba(56,226,255,.32), inset 0 0 16px rgba(56,226,255,.08);
 }
-#totalNum { font-size: 2.3rem; font-weight: 900; line-height: 1; color: var(--cyan);
-            text-shadow: 0 0 20px rgba(34,211,238,.45); font-variant-numeric: tabular-nums; }
-#totalLbl { font-size: .95rem; font-weight: 700; color: var(--text-dim); }
+#totalSweep {
+  position: absolute; inset: -2px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0deg, var(--cyan) 22deg, transparent 55deg, transparent 360deg);
+  filter: blur(.5px);
+  animation: totalRingSpin 4.5s linear infinite;
+}
+@keyframes totalRingSpin { to { transform: rotate(360deg); } }
+#totalBadgeInner {
+  position: absolute; inset: 9px; border-radius: 50%;
+  background: rgba(3,10,24,.82);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+#totalNum { font-size: 1.95rem; font-weight: 900; line-height: 1; color: var(--cyan);
+            text-shadow: 0 0 18px rgba(56,226,255,.65); font-variant-numeric: tabular-nums; }
+#totalLbl { font-size: .62rem; font-weight: 800; color: var(--text-dim); margin-top: 2px; }
 
 .hdr-right { text-align: right; flex-shrink: 0; }
 #clock {
@@ -153,6 +205,13 @@ body::after  { bottom: -280px; right: -160px; background: rgba(56,226,255,.12); 
 .zc::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
   background: var(--zc-color);
+  box-shadow: 0 0 10px var(--zc-color);
+}
+/* มุมเรืองแสงไว้มุมขวาล่าง สีตามโซนนั้นๆ (มุมซ้ายบนให้แถบสีบนใช้พื้นที่แทน) */
+.zc::after {
+  content: ''; position: absolute; bottom: 7px; right: 7px; width: 12px; height: 12px;
+  border-bottom: 2px solid var(--zc-color); border-right: 2px solid var(--zc-color);
+  border-radius: 0 0 3px 0; opacity: .6; pointer-events: none;
 }
 .zc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 6px; }
 .zc-pill {
@@ -162,10 +221,13 @@ body::after  { bottom: -280px; right: -160px; background: rgba(56,226,255,.12); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 100%;
 }
-.zc-count { font-size: 2.1rem; font-weight: 900; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+.zc-count {
+  font-size: 2.1rem; font-weight: 900; line-height: 1; color: var(--text);
+  font-variant-numeric: tabular-nums; text-shadow: 0 0 16px var(--zc-color);
+}
 .zc-sub { font-size: .68rem; color: var(--text-faint); font-weight: 700; margin-top: 2px; text-transform: uppercase; letter-spacing: .04em; }
 .zc-bar-outer { height: 4px; background: var(--surface-3); border-radius: 2px; overflow: hidden; margin-top: 10px; }
-.zc-bar-inner { height: 100%; border-radius: 2px; background: var(--zc-color); transition: width .5s ease; }
+.zc-bar-inner { height: 100%; border-radius: 2px; background: var(--zc-color); box-shadow: 0 0 8px var(--zc-color); transition: width .5s ease; }
 .zc-pulse::before { animation: zcbarpulse 1.4s infinite; }
 @keyframes zcbarpulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
@@ -280,7 +342,7 @@ tbody tr:hover td { background: var(--surface-2); }
   overflow: hidden; text-overflow: ellipsis;
 }
 .wt-stat { flex: 1; min-width: 0; text-align: right; white-space: nowrap; }
-.wt-num { font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.wt-num { font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; text-shadow: 0 0 10px currentColor; }
 .wt-unit { font-size: .66rem; color: var(--text-faint); font-weight: 700; }
 .wt-sub { font-size: .64rem; color: var(--text-faint); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -381,6 +443,9 @@ tbody tr:hover td { background: var(--surface-2); }
 </head>
 <body>
 
+<div id="hudGrid"></div>
+<div id="hudScan"></div>
+
 <div id="hdr">
   <div class="hdr-left">
     <div class="hdr-logo">🏥</div>
@@ -396,8 +461,11 @@ tbody tr:hover td { background: var(--surface-2); }
   <div class="hdr-center">
     <div id="hdrTitle">ER Status Overview</div>
     <div id="totalBadge">
-      <span id="totalNum">–</span>
-      <span id="totalLbl">ราย ในห้อง ER</span>
+      <div id="totalSweep"></div>
+      <div id="totalBadgeInner">
+        <span id="totalNum">–</span>
+        <span id="totalLbl">ราย ใน ER</span>
+      </div>
     </div>
   </div>
   <div class="hdr-right" style="display:flex;align-items:center;gap:16px">
@@ -734,9 +802,9 @@ function renderStatusList(sCounts) {
     const pct = Math.round(cnt / total * 100);
     return `
       <div class="st-row">
-        <span class="st-dot" style="background:${s.color}"></span>
+        <span class="st-dot" style="background:${s.color};box-shadow:0 0 6px ${s.color}"></span>
         <span class="st-label">${s.label}</span>
-        <div class="st-bar-outer"><div class="st-bar-inner" style="width:${pct}%;background:${s.color}"></div></div>
+        <div class="st-bar-outer"><div class="st-bar-inner" style="width:${pct}%;background:${s.color};box-shadow:0 0 6px ${s.color}"></div></div>
         <span class="st-num">${cnt}</span>
       </div>`;
   }).join('');
