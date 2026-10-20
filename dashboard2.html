@@ -53,6 +53,20 @@ body {
    อยู่ชั้นหลังสุด ไม่บังเนื้อหาตรงกลาง ── */
 #hudCorners { position: fixed; inset: 0; z-index: 0; pointer-events: none; width: 100%; height: 100%; }
 
+/* ── วงแหวนเรดาร์ขนาดใหญ่ (hudRing) — หมุนช้าๆ คนละความเร็ว/ทิศ ให้ความรู้สึกมีมิติ/มีชีวิต ── */
+#hudRing {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; width: 100%; height: 100%;
+  filter: drop-shadow(0 0 26px rgba(56,226,255,.18));
+}
+#hudRing .ring-a { transform-origin: 0 0; animation: hudRingSpin 60s linear infinite; }
+#hudRing .ring-b { transform-origin: 0 0; animation: hudRingSpin 40s linear infinite reverse; }
+#hudRing .ring-c { transform-origin: 0 0; animation: hudRingSpin 80s linear infinite reverse; }
+@keyframes hudRingSpin { to { transform: rotate(360deg); } }
+#hudRing .hud-bin {
+  font-family: 'Consolas','Courier New',monospace; font-size: 15px; letter-spacing: .15em;
+  fill: var(--cyan); opacity: .20;
+}
+
 /* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
    ใช้เฉพาะแผงด้านข้าง (#side .panel) ไม่ใช้กับแผงตารางหลัก กันไปทับแถวข้อมูลที่เลื่อนอยู่ ── */
 #side .panel { position: relative; }
@@ -168,6 +182,7 @@ body {
 }
 .zc {
   background: var(--surface);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 14px 16px 12px;
@@ -218,6 +233,7 @@ body {
 
 .panel {
   background: var(--surface);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
@@ -437,6 +453,34 @@ tbody tr:hover td { background: var(--surface-2); }
   <use href="#hudCornerFrame" transform="translate(1600,0)  scale(-1,1)"/>
   <use href="#hudCornerFrame" transform="translate(0,900)   scale(1,-1)"/>
   <use href="#hudCornerFrame" transform="translate(1600,900) scale(-1,-1)"/>
+</svg>
+
+<!-- ── วงแหวนเรดาร์/เกจขนาดใหญ่ มุมล่างซ้าย — องค์ประกอบหลักแบบจอ HUD เทคโนโลยี
+     ค่อนไปทางมุมจอ ให้ตารางข้อมูลตรงกลางยังอ่านง่าย ไม่บังข้อมูล ── */
+<svg id="hudRing" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <g transform="translate(70,860)">
+    <g class="ring-a">
+      <circle r="400" fill="none" stroke="var(--cyan)" stroke-width="10" opacity=".07"/>
+      <circle r="400" fill="none" stroke="var(--cyan)" stroke-width="2.4" stroke-dasharray="46 20" opacity=".26"/>
+    </g>
+    <g class="ring-b">
+      <circle r="330" fill="none" stroke="var(--cyan)" stroke-width="1.6" stroke-dasharray="3 9" opacity=".30"/>
+    </g>
+    <circle r="275" fill="none" stroke="var(--violet)" stroke-width="1.2" opacity=".22"/>
+    <g class="ring-c">
+      <circle r="225" fill="none" stroke="var(--cyan)" stroke-width="16" stroke-dasharray="2.5 8" opacity=".16"/>
+    </g>
+    <circle r="160" fill="none" stroke="var(--cyan)" stroke-width="1.2" opacity=".32"/>
+    <circle r="62"  fill="none" stroke="var(--cyan)" stroke-width="1"   opacity=".38"/>
+    <g class="ring-b">
+      <circle cx="330" cy="0" r="4.5" fill="var(--cyan)" opacity=".65"/>
+      <circle cx="-280" cy="170" r="3" fill="var(--violet)" opacity=".5"/>
+    </g>
+    <!-- ตัวเลขฐานสองประกอบบรรยากาศ เหมือนจอ data stream -->
+    <text x="420" y="-260" class="hud-bin">01 0010</text>
+    <text x="470" y="-120" class="hud-bin">1101</text>
+    <text x="440" y="60"   class="hud-bin">0100 1011</text>
+  </g>
 </svg>
 
 <div id="hdr">
