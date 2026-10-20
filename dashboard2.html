@@ -44,36 +44,37 @@ body {
   position: relative;
 }
 
-/* ── พื้นหลังสีเดียว + glow จางๆ ไว้มุมจอ เพิ่มมิติแบบ "ไอที" โดยไม่ทำให้พื้นหลังดูเป็นเกรเดียนต์ ── */
-body::before, body::after {
-  content: ''; position: fixed; z-index: 0; pointer-events: none;
-  width: 640px; height: 640px; border-radius: 50%; filter: blur(140px);
+/* ── HOLOGRAM BACKGROUND — กลุ่มแสงสีเหลื่อมกัน (ฟ้า/ม่วง/ชมพู) ลอยและไล่สีช้าๆ
+   เหมือนแผ่นโฮโลแกรม พื้นฐานยังเป็น --bg สีเดียว ชั้นนี้แค่ลอยทับเป็นแสงเท่านั้น ── */
+#holoBg {
+  position: fixed; inset: -10%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(56,226,255,.20), transparent 38%),
+    radial-gradient(circle at 82% 18%, rgba(167,139,250,.17), transparent 40%),
+    radial-gradient(circle at 72% 82%, rgba(244,114,182,.15), transparent 42%),
+    radial-gradient(circle at 15% 78%, rgba(96,165,250,.17), transparent 40%);
+  filter: blur(70px);
+  animation: holoDrift 20s ease-in-out infinite alternate;
 }
-body::before { top: -260px; left: -160px;  background: rgba(255,255,255,.07); }
-body::after  { bottom: -280px; right: -160px; background: rgba(56,226,255,.12); }
-
-/* ── HUD GRID — ลายตารางจางๆ แบบจอ control room/sci-fi ไม่กระทบความเป็น "พื้นสีเดียว" เพราะอยู่ชั้นบนสุด
-   เป็นแค่ลายเส้นบางๆ ไม่ใช่สีพื้นหลังอีกสี ── */
-#hudGrid {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(56,226,255,.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56,226,255,.07) 1px, transparent 1px);
-  background-size: 44px 44px;
-  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 15%, #000 0%, transparent 78%);
-          mask-image: radial-gradient(ellipse 85% 70% at 50% 15%, #000 0%, transparent 78%);
+@keyframes holoDrift {
+  0%   { transform: translate(0,0) scale(1);      filter: blur(70px) hue-rotate(0deg); }
+  50%  { transform: translate(-2%, 2%) scale(1.06); filter: blur(80px) hue-rotate(20deg); }
+  100% { transform: translate(2%, -2%) scale(1);   filter: blur(70px) hue-rotate(-14deg); }
 }
 
-/* ── HUD SCAN — เส้นแสงกวาดขึ้น-ลงเบาๆ ให้ความรู้สึกจอ "กำลังสแกน/live" แบบห้องควบคุม ── */
-#hudScan { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-#hudScan::before {
-  content: ''; position: absolute; left: 0; right: 0; top: -160px; height: 160px;
-  background: linear-gradient(to bottom, transparent, rgba(56,226,255,.10), transparent);
-  animation: hudScanMove 7s linear infinite;
+/* ── แผ่นลายรุ้งเหลื่อมเฉียงแบบผิวโฮโลแกรม (foil sheen) — เลื่อนช้าๆ ไม่หยุดนิ่ง ── */
+#holoSheen {
+  position: fixed; inset: -300px; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(115deg,
+    rgba(56,226,255,.05) 0px,  rgba(167,139,250,.05) 70px,
+    rgba(244,114,182,.05) 140px, rgba(96,165,250,.05) 210px,
+    rgba(56,226,255,.05) 280px);
+  mix-blend-mode: screen;
+  animation: holoSheenMove 16s linear infinite;
 }
-@keyframes hudScanMove {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(calc(100vh + 160px)); }
+@keyframes holoSheenMove {
+  0%   { transform: translate(0,0); }
+  100% { transform: translate(220px, 140px); }
 }
 
 #hdr, #zones, #main, #footer { position: relative; z-index: 1; }
@@ -443,8 +444,8 @@ tbody tr:hover td { background: var(--surface-2); }
 </head>
 <body>
 
-<div id="hudGrid"></div>
-<div id="hudScan"></div>
+<div id="holoBg"></div>
+<div id="holoSheen"></div>
 
 <div id="hdr">
   <div class="hdr-left">
