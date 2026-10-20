@@ -12,11 +12,11 @@
      เลือกได้จากแผงตั้งค่า ⚙ ของหน้านี้ว่าจะใช้โทนนี้หรือฟ้า/น้ำเงินโทนอื่น ── */
   --bg:        #0f172a;  /* Slate-900 */
   --panel-dk:  rgba(3,16,36,.55);   /* แผ่นเข้มลอยทับพื้นฟ้า (header/footer/thead) */
-  --surface:   rgba(255,255,255,.07);
-  --surface-2: rgba(255,255,255,.11);
-  --surface-3: rgba(255,255,255,.15);
-  --border:    rgba(255,255,255,.16);
-  --border-2:  rgba(255,255,255,.26);
+  --surface:   rgba(255,255,255,.10);
+  --surface-2: rgba(255,255,255,.14);
+  --surface-3: rgba(255,255,255,.19);
+  --border:    rgba(255,255,255,.20);
+  --border-2:  rgba(255,255,255,.32);
   --cyan:      #38e2ff;  /* Neon Cyan / Electric Blue — สีเส้น/ลวดลายหลัก */
   --blue:      #60a5fa;
   --violet:    #a78bfa;
@@ -30,7 +30,7 @@
   --bad:       #fb7185;
   --hdr-font:  .72rem;   /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
   --data-font: .98rem;
-  --bg-glow:   #1a326c;  /* สีกลางจอที่สว่างกว่า --bg เล็กน้อย (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
+  --bg-glow:   #1c3a83;  /* สีกลางจอที่สว่างกว่า --bg (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
 }
 
 html, body {
@@ -57,20 +57,20 @@ body {
 #sideGlow::before, #sideGlow::after {
   content: ''; position: absolute; top: 8%; bottom: 8%; width: 2px;
   filter: blur(1px);
-  opacity: .4;
+  opacity: .55;
   animation: sideGlowPulse 7s ease-in-out infinite;
 }
 #sideGlow::before {
   left: 16px;
   background: linear-gradient(to bottom, transparent, var(--cyan) 15%, var(--cyan) 85%, transparent);
-  box-shadow: 0 0 22px 3px rgba(56,226,255,.30);
+  box-shadow: 0 0 30px 5px rgba(56,226,255,.42);
 }
 #sideGlow::after {
   right: 16px; animation-delay: 3.5s;
   background: linear-gradient(to bottom, transparent, var(--teal) 15%, var(--teal) 85%, transparent);
-  box-shadow: 0 0 22px 3px rgba(45,212,191,.28);
+  box-shadow: 0 0 30px 5px rgba(45,212,191,.38);
 }
-@keyframes sideGlowPulse { 0%, 100% { opacity: .25; } 50% { opacity: .55; } }
+@keyframes sideGlowPulse { 0%, 100% { opacity: .40; } 50% { opacity: .75; } }
 
 /* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
    ใช้เฉพาะแผงด้านข้าง (#side .panel) ไม่ใช้กับแผงตารางหลัก กันไปทับแถวข้อมูลที่เลื่อนอยู่ ── */
@@ -995,8 +995,8 @@ function hslToHex(h, s, l) {
 }
 function glowColor(hex) {
   const [h, s, l] = hexToHsl(hex);
-  /* บูสต์เบาลงกว่าก่อนหน้า — ให้สีกลาง-ขอบจอสม่ำเสมอกันขึ้น ไม่ตัดกันจัดจนรู้สึกเป็นสองโทน */
-  return hslToHex(h, Math.min(75, s+14), Math.min(38, l+15));
+  /* บูสต์สว่างขึ้นกว่ารอบก่อน (ยังคงความสม่ำเสมอกลาง-ขอบ แค่ยกความสว่างรวมทั้งจอขึ้น) */
+  return hslToHex(h, Math.min(80, s+18), Math.min(46, l+20));
 }
 
 function s2ApplyToDom() {
