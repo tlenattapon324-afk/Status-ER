@@ -232,11 +232,19 @@ tbody tr:hover td { background: var(--surface-2); }
 
 .zone-pill {
   display: inline-block;
+  max-width: 100%;
   font-size: .8em; font-weight: 800;
   padding: 4px 12px; border-radius: 999px;
-  white-space: nowrap;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  vertical-align: middle;
 }
-.status-cell { display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: .9em; font-weight: 600; }
+.status-cell {
+  display: flex; align-items: center; gap: 7px;
+  color: var(--text-dim); font-size: .9em; font-weight: 600;
+}
+.status-cell .status-text {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
 .status-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .wait-chip {
   font-size: .8em; font-weight: 800; padding: 3px 10px; border-radius: 7px;
@@ -265,11 +273,15 @@ tbody tr:hover td { background: var(--surface-2); }
 .st-bar-outer { flex: 1.2; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
 .st-bar-inner { height: 100%; border-radius: 3px; transition: width .5s ease; }
 
-.wt-row { display: flex; align-items: center; gap: 10px; }
-.wt-pill { flex-shrink: 0; min-width: 72px; }
-.wt-num { font-size: 1.15rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.wt-row { display: flex; align-items: center; gap: 8px; }
+.wt-pill {
+  flex-shrink: 0; width: 84px; text-align: center;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.wt-stat { flex: 1; min-width: 0; text-align: right; white-space: nowrap; }
+.wt-num { font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .wt-unit { font-size: .66rem; color: var(--text-faint); font-weight: 700; }
-.wt-sub { font-size: .66rem; color: var(--text-faint); margin-top: 1px; }
+.wt-sub { font-size: .64rem; color: var(--text-faint); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── FOOTER ── */
 #footer {
@@ -404,12 +416,12 @@ tbody tr:hover td { background: var(--surface-2); }
       <table>
         <thead>
           <tr>
-            <th style="width:76px">เวลา</th>
-            <th style="width:104px">HN</th>
-            <th>ชื่อ-สกุล</th>
-            <th style="width:210px">โซน</th>
-            <th style="width:170px">สถานะ</th>
-            <th style="width:90px">รอ (นาที)</th>
+            <th style="width:70px">เวลา</th>
+            <th style="width:100px">HN</th>
+            <th style="min-width:160px">ชื่อ-สกุล</th>
+            <th style="width:230px">โซน</th>
+            <th style="width:150px">สถานะ</th>
+            <th style="width:84px; text-align:center">รอ (นาที)</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -688,7 +700,7 @@ function renderTable(rows) {
         <td>
           <div class="status-cell">
             <span class="status-dot" style="background:${sInfo.color}"></span>
-            ${r.status || sInfo.label}
+            <span class="status-text">${r.status || sInfo.label}</span>
           </div>
         </td>
         <td><span class="wait-chip" style="color:${waitCol};background:${waitBg}">${mins !== null ? mins : '–'}</span></td>
@@ -725,8 +737,8 @@ function renderWaitList(zWaits, zNames) {
     const name  = zNames[lv] || ZONE_FALLBACK[lv];
     return `
       <div class="wt-row">
-        <span class="zc-pill wt-pill" style="background:${color};color:${textOn(color)}">${name.split(' (')[0]}</span>
-        <div style="flex:1; text-align:right">
+        <span class="zc-pill wt-pill" style="background:${color};color:${textOn(color)}" title="${name}">${name.split(' (')[0]}</span>
+        <div class="wt-stat">
           <span class="wt-num" style="color:${col}">${avg !== null ? avg : '–'}</span>
           <span class="wt-unit">นาที</span>
           <div class="wt-sub">${arr.length} ราย${over ? ' · เกินเกณฑ์' : ''}</div>
