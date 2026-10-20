@@ -62,10 +62,6 @@ body {
 #hudRing .ring-b { transform-origin: 0 0; animation: hudRingSpin 40s linear infinite reverse; }
 #hudRing .ring-c { transform-origin: 0 0; animation: hudRingSpin 80s linear infinite reverse; }
 @keyframes hudRingSpin { to { transform: rotate(360deg); } }
-#hudRing .hud-bin {
-  font-family: 'Consolas','Courier New',monospace; font-size: 15px; letter-spacing: .15em;
-  fill: var(--cyan); opacity: .20;
-}
 
 /* ── HUD corner-bracket frame — มุมเรืองแสงเล็กๆ แบบจอ HUD
    ใช้เฉพาะแผงด้านข้าง (#side .panel) ไม่ใช้กับแผงตารางหลัก กันไปทับแถวข้อมูลที่เลื่อนอยู่ ── */
@@ -476,10 +472,6 @@ tbody tr:hover td { background: var(--surface-2); }
       <circle cx="330" cy="0" r="4.5" fill="var(--cyan)" opacity=".65"/>
       <circle cx="-280" cy="170" r="3" fill="var(--violet)" opacity=".5"/>
     </g>
-    <!-- ตัวเลขฐานสองประกอบบรรยากาศ เหมือนจอ data stream -->
-    <text x="420" y="-260" class="hud-bin">01 0010</text>
-    <text x="470" y="-120" class="hud-bin">1101</text>
-    <text x="440" y="60"   class="hud-bin">0100 1011</text>
   </g>
 </svg>
 
