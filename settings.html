@@ -389,33 +389,6 @@
       </div>
     </div>
 
-    <!-- Display Screen Section -->
-    <div class="section-card mb-5">
-      <div class="text-sm font-bold mb-4 flex items-center gap-2" style="color:#0f4c81">
-        <span class="text-lg">🖥</span> หน้าจอแสดงผล
-      </div>
-      <div class="text-xs mb-4" style="color:#6a95b8">
-        เลือกหน้าจอที่จะใช้แสดงสถานะ ER — ปุ่ม "เข้าสู่หน้าแสดงสถานะ ER" ที่หน้าแรก
-        และการบันทึกค่าเชื่อมต่อด้านบน จะพาไปหน้านี้
-      </div>
-      <div class="flex gap-3">
-        <div class="db-tab active-mysql" id="tabScreen1" onclick="selectScreen('dashboard')">
-          <span class="text-2xl">📺</span>
-          <div class="text-left">
-            <div class="font-black">หน้าจอมาตรฐาน</div>
-            <div class="text-xs opacity-70 font-normal">ตารางเลื่อน ปรับสี/ฟอนต์เองได้</div>
-          </div>
-        </div>
-        <div class="db-tab" id="tabScreen2" onclick="selectScreen('dashboard2')">
-          <span class="text-2xl">🖥</span>
-          <div class="text-left">
-            <div class="font-black">หน้าจอใหม่</div>
-            <div class="text-xs opacity-70 font-normal">พื้นหลังสีเดียว โทนไอที อ่านง่าย</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row gap-3">
 
@@ -507,32 +480,16 @@
     });
 
     let dbType = 'mysql';
+    /* เลือกหน้าจอแสดงผลได้จากพาเนล "⚙ ตั้งค่า" ในหน้า dashboard.html เอง (ไม่ใช่ที่นี่) —
+       ตรงนี้แค่อ่านค่าที่เลือกไว้ล่าสุด มาใช้ตอน redirect หลังบันทึกค่าเชื่อมต่อ/เปิดใช้ profile
+       เพื่อไม่ให้ผู้ที่เลือกหน้าจอใหม่ไว้ ถูกเด้งกลับไปหน้าจอมาตรฐานโดยไม่ได้ตั้งใจ */
     let activeScreen = 'dashboard';
-
-    /* ── Display screen toggle ── */
-    function selectScreen(screen) {
-      activeScreen = screen;
-      document.getElementById('tabScreen1').className = 'db-tab' + (screen === 'dashboard'  ? ' active-mysql'    : '');
-      document.getElementById('tabScreen2').className = 'db-tab' + (screen === 'dashboard2' ? ' active-postgres' : '');
-    }
     async function loadActiveScreen() {
       try {
         const r = await fetch('/api/defaults');
         const d = await r.json();
-        selectScreen(d?.defaults?.activeScreen === 'dashboard2' ? 'dashboard2' : 'dashboard');
-      } catch { selectScreen('dashboard'); }
-    }
-    /* บันทึก activeScreen ไว้ใน user-defaults.json — ไม่แตะค่าอื่น (สี/ฟอนต์ ฯลฯ ของหน้าจอมาตรฐาน) */
-    async function saveActiveScreen() {
-      try {
-        const r = await fetch('/api/defaults');
-        const d = await r.json();
-        const merged = { ...(d?.defaults || {}), activeScreen };
-        await fetch('/api/defaults', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(merged),
-        });
-      } catch { /* ไม่ critical — ไปต่อแม้บันทึกไม่สำเร็จ */ }
+        activeScreen = d?.defaults?.activeScreen === 'dashboard2' ? 'dashboard2' : 'dashboard';
+      } catch { activeScreen = 'dashboard'; }
     }
 
     /* ── Apply config object to form ── */
@@ -796,10 +753,7 @@
         }
       } catch { /* verify ไม่ได้ แต่ save ผ่านแล้ว ไปต่อ */ }
 
-      /* 3. บันทึกหน้าจอที่เลือกไว้ (ไม่ critical — ไม่บล็อก redirect ถ้าพลาด) */
-      await saveActiveScreen();
-
-      /* 4. Save to localStorage + redirect */
+      /* 3. Save to localStorage + redirect */
       localStorage.setItem('erStatus_db', JSON.stringify(cfg));
       showTestResult('ok', `✅ บันทึกสำเร็จ — ${cfg.dbType?.toUpperCase()} @ ${cfg.host}:${cfg.port}<br><small>กำลังเข้าสู่ระบบ...</small>`);
       setTimeout(() => location.href = `${activeScreen}.html`, 1000);

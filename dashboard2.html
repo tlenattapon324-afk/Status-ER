@@ -194,7 +194,7 @@ tbody tr:hover td { background: rgba(255,255,255,.03); }
   <div class="hdr-left">
     <div class="hdr-logo">🖥</div>
     <div>
-      <a href="/dashboard.html">← Dashboard</a>
+      <a href="#" onclick="switchToClassic(); return false;">← Dashboard</a>
       <div id="hdrHosp">โรงพยาบาล</div>
       <div id="hdrSub">ห้องอุบัติเหตุและฉุกเฉิน</div>
     </div>
@@ -352,6 +352,21 @@ function startAutoScroll() {
 /* ═══════════ FETCH ═══════════ */
 let REFRESH = 30, cd = 30, cdInterval = null;
 const API_HEADERS = window.__API_TOKEN__ ? { 'X-API-Token': window.__API_TOKEN__ } : {};
+
+/* ── กลับไปหน้าจอมาตรฐาน — บันทึกค่า activeScreen ไว้ด้วย เพื่อให้ปุ่ม/ลิงก์อื่นๆ
+   (หน้าแรก, หลังบันทึกค่าเชื่อมต่อ) พากลับมาหน้านี้แทนอัตโนมัติในครั้งถัดไป ── */
+async function switchToClassic() {
+  try {
+    const r = await fetch('/api/defaults');
+    const d = await r.json();
+    const merged = { ...(d?.defaults || {}), activeScreen: 'dashboard' };
+    await fetch('/api/defaults', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(merged),
+    });
+  } catch {}
+  location.href = '/dashboard.html';
+}
 
 async function loadMaskSettings() {
   try {

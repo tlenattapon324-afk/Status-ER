@@ -231,6 +231,15 @@
 
   <div class="p-5 flex-1 overflow-y-auto flex flex-col gap-5">
 
+    <!-- ⓪ หน้าจอแสดงผล -->
+    <div>
+      <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">🖥 หน้าจอแสดงผล</div>
+      <div class="grid grid-cols-2 gap-2" id="screenOpts"></div>
+      <div class="text-xs text-gray-400 mt-2">สลับหน้าจอแสดงสถานะ ER — ใช้ร่วมกันทุกเครื่องที่เปิดระบบนี้</div>
+    </div>
+
+    <hr class="border-gray-100" />
+
     <!-- ① การรีเฟรช -->
     <div>
       <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">🔄 การรีเฟรช</div>
@@ -1320,6 +1329,39 @@ function openSettings()  {
   document.getElementById('overlay').classList.add('open');
   loadAndRenderFonts();
   buildHeaderBgPicker();
+  buildScreenOpts();
+}
+
+/* ── หน้าจอแสดงผล — สลับไป dashboard.html / dashboard2.html
+   บันทึกไว้ใน user-defaults.json (ค่ากลาง ใช้ร่วมกันทุกเครื่อง) ไม่ทับค่าตั้งค่าอื่น ── */
+async function buildScreenOpts() {
+  let active = 'dashboard';
+  try {
+    const r = await fetch('/api/defaults');
+    const d = await r.json();
+    active = d?.defaults?.activeScreen === 'dashboard2' ? 'dashboard2' : 'dashboard';
+  } catch {}
+  const opts = [
+    { val:'dashboard',  label:'📺 มาตรฐาน' },
+    { val:'dashboard2', label:'🖥 ใหม่ (ไอที)' },
+  ];
+  document.getElementById('screenOpts').innerHTML = opts.map(o=>`
+    <button class="ropt ${o.val===active?'active':''}" data-val="${o.val}"
+            onclick="switchScreen('${o.val}')">${o.label}</button>`).join('');
+}
+async function switchScreen(screen) {
+  if (screen === 'dashboard') { closeSettings(); return; } /* อยู่หน้านี้อยู่แล้ว */
+  if (!confirm('สลับไปหน้าจอ "ใหม่ (ไอที)"?\nระบบจะพาไปหน้าจอนั้นทันที — เปลี่ยนกลับได้จากหน้าจอใหม่')) return;
+  try {
+    const r = await fetch('/api/defaults');
+    const d = await r.json();
+    const merged = { ...(d?.defaults || {}), activeScreen: screen };
+    await fetch('/api/defaults', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(merged),
+    });
+  } catch { /* ไม่ critical — ไปหน้าจอใหม่ต่อแม้บันทึกไม่สำเร็จ */ }
+  location.href = `${screen}.html`;
 }
 function closeSettings() {
   document.getElementById('settingsPanel').classList.add('translate-x-full');
