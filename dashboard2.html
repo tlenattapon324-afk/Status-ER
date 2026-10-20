@@ -555,7 +555,7 @@ tbody tr:hover td { background: var(--surface-2); }
     </div>
 
     <div>
-      <div class="s2-sec-title">👤 ชื่อผู้ป่วย</div>
+      <div class="s2-sec-title">👤 ชื่อผู้ป่วย / HN</div>
       <label class="s2-check">
         <input type="checkbox" id="s2ChkMaskFirst" onchange="s2SetMaskFirst(this.checked)" />
         <div>
@@ -568,6 +568,13 @@ tbody tr:hover td { background: var(--surface-2); }
         <div>
           <div class="s2-check-label">มาสก์นามสกุล</div>
           <div class="s2-check-sub">ซ่อน 4 ตัวท้ายของนามสกุล</div>
+        </div>
+      </label>
+      <label class="s2-check">
+        <input type="checkbox" id="s2ChkMaskHn" onchange="s2SetMaskHn(this.checked)" />
+        <div>
+          <div class="s2-check-label">มาสก์ HN</div>
+          <div class="s2-check-sub">ซ่อน 4 ตัวท้ายของ HN</div>
         </div>
       </label>
     </div>
@@ -709,8 +716,8 @@ function tick() {
 }
 setInterval(tick, 1000); tick();
 
-/* ═══════════ NAME MASKING — ซ่อนแค่ 4 ตัวท้าย (เหมือนหน้าจอมาตรฐาน) ═══════════ */
-let maskFirst = false, maskLast = false;
+/* ═══════════ NAME / HN MASKING — ซ่อนแค่ 4 ตัวท้าย (เหมือนหน้าจอมาตรฐาน) ═══════════ */
+let maskFirst = false, maskLast = false, maskHn = false;
 function maskNamePart(s) { return s.length > 4 ? s.slice(0, -4) + 'XXXX' : 'XXXX'; }
 function maskPatientName(name) {
   if (!name || (!maskFirst && !maskLast)) return name;
@@ -719,6 +726,10 @@ function maskPatientName(name) {
   if (maskFirst) parts[0] = maskNamePart(parts[0]);
   if (maskLast)  parts[parts.length-1] = maskNamePart(parts[parts.length-1]);
   return parts.join(' ');
+}
+function maskHnValue(hn) {
+  if (!hn || !maskHn) return hn;
+  return maskNamePart(hn);
 }
 function initials(name) {
   const n = (name || '').trim();
@@ -770,7 +781,7 @@ function renderTable(rows) {
     return `
       <tr>
         <td class="td-time">${r.time}</td>
-        <td><span class="td-hn">${r.hn || '–'}</span></td>
+        <td><span class="td-hn">${maskHnValue(r.hn) || '–'}</span></td>
         <td>
           <div class="name-cell">
             <div class="avatar" style="background:${color};color:${textOn(color)}">${initials(r.name)}</div>
@@ -896,6 +907,7 @@ const DEFAULT_S2 = {
   leaveInstant:  false,
   maskFirst:   false,
   maskLast:    false,
+  maskHn:      false,
   scrollSpeed: 18,   // px/วินาที (เทียบเท่า "ปานกลาง" ของหน้าจอมาตรฐาน)
   showSide:    true,
   hdrFontPx:   12,
@@ -938,7 +950,7 @@ let bgColor     = DEFAULT_S2.bgColor;
 function s2CurrentObj() {
   return {
     bgColor, zoneColors: { ...ZONE_COLOR }, refreshSecs: REFRESH,
-    leaveGraceMin, leaveInstant, maskFirst, maskLast,
+    leaveGraceMin, leaveInstant, maskFirst, maskLast, maskHn,
     scrollSpeed, showSide, hdrFontPx, dataFontPx,
   };
 }
@@ -953,6 +965,7 @@ function s2ApplyObj(s) {
   if (s.leaveInstant !== undefined)   leaveInstant = s.leaveInstant;
   if (s.maskFirst !== undefined)      maskFirst = s.maskFirst;
   if (s.maskLast !== undefined)       maskLast  = s.maskLast;
+  if (s.maskHn !== undefined)         maskHn    = s.maskHn;
   if (s.scrollSpeed !== undefined)    scrollSpeed = s.scrollSpeed;
   if (s.showSide !== undefined)       showSide = s.showSide;
   if (s.hdrFontPx !== undefined)      hdrFontPx = s.hdrFontPx;
@@ -1075,6 +1088,7 @@ function s2RenderPanelState() {
   document.getElementById('s2ChkLeaveInstant').checked = leaveInstant;
   document.getElementById('s2ChkMaskFirst').checked    = maskFirst;
   document.getElementById('s2ChkMaskLast').checked     = maskLast;
+  document.getElementById('s2ChkMaskHn').checked       = maskHn;
   document.getElementById('s2ChkSide').checked         = showSide;
   document.getElementById('s2HdrFontVal').textContent  = hdrFontPx;
   document.getElementById('s2DataFontVal').textContent = dataFontPx;
@@ -1099,6 +1113,7 @@ function s2SetLeaveInstant(v)   { leaveInstant = v; s2SaveLocal(); }
 function s2SetScroll(val)       { scrollSpeed = val; s2SaveLocal(); s2RenderPanelState(); startAutoScroll(); }
 function s2SetMaskFirst(v)      { maskFirst = v; s2SaveLocal(); rerenderAll(); }
 function s2SetMaskLast(v)       { maskLast  = v; s2SaveLocal(); rerenderAll(); }
+function s2SetMaskHn(v)         { maskHn    = v; s2SaveLocal(); rerenderAll(); }
 function s2SetShowSide(v)       { showSide = v; s2SaveLocal(); s2ApplyToDom(); }
 function s2AdjustFont(which, dir) {
   if (which === 'hdr')  hdrFontPx  = Math.min(20, Math.max(9,  hdrFontPx  + dir));
