@@ -132,33 +132,6 @@ body {
 @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 #hdrSub  { font-size: .78rem; color: var(--text-dim); font-weight: 600; margin-top: 2px; }
 
-.hdr-center { text-align: center; flex-shrink: 0; }
-#hdrTitle {
-  font-size: .72rem; font-weight: 800; color: var(--text-faint);
-  text-transform: uppercase; letter-spacing: .22em; margin-bottom: 7px;
-}
-/* ── วงแหวนเรืองแสงรอบจำนวนผู้ป่วยรวม — เอฟเฟกต์ scanning ring แบบจอ HUD ── */
-#totalBadge {
-  position: relative; width: 94px; height: 94px; margin: 0 auto;
-  border-radius: 50%;
-  border: 2px solid rgba(56,226,255,.22);
-  box-shadow: 0 0 26px rgba(56,226,255,.32), inset 0 0 16px rgba(56,226,255,.08);
-}
-#totalSweep {
-  position: absolute; inset: -2px; border-radius: 50%; pointer-events: none;
-  background: conic-gradient(from 0deg, transparent 0deg, var(--cyan) 22deg, transparent 55deg, transparent 360deg);
-  filter: blur(.5px);
-  animation: totalRingSpin 4.5s linear infinite;
-}
-@keyframes totalRingSpin { to { transform: rotate(360deg); } }
-#totalBadgeInner {
-  position: absolute; inset: 9px; border-radius: 50%;
-  background: rgba(3,10,24,.82);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-#totalNum { font-size: 1.95rem; font-weight: 900; line-height: 1; color: var(--cyan);
-            text-shadow: 0 0 18px rgba(56,226,255,.65); font-variant-numeric: tabular-nums; }
-#totalLbl { font-size: .62rem; font-weight: 800; color: var(--text-dim); margin-top: 2px; }
 
 .hdr-right { text-align: right; flex-shrink: 0; }
 #clock {
@@ -457,16 +430,6 @@ tbody tr:hover td { background: var(--surface-2); }
         <span class="live-chip"><span class="live-dot"></span>LIVE</span>
       </div>
       <div id="hdrSub">ห้องอุบัติเหตุและฉุกเฉิน</div>
-    </div>
-  </div>
-  <div class="hdr-center">
-    <div id="hdrTitle">ER Status Overview</div>
-    <div id="totalBadge">
-      <div id="totalSweep"></div>
-      <div id="totalBadgeInner">
-        <span id="totalNum">–</span>
-        <span id="totalLbl">ราย ใน ER</span>
-      </div>
     </div>
   </div>
   <div class="hdr-right" style="display:flex;align-items:center;gap:16px">
@@ -1286,7 +1249,6 @@ async function load() {
     rows.sort((a,b) => a.lv - b.lv || a._sortTime.localeCompare(b._sortTime));
 
     const activeTotal = rows.length;
-    document.getElementById('totalNum').textContent = activeTotal;
 
     lastRenderData = { zCounts, zNames, rows, sCounts, zWaits, activeTotal };
     renderZones(zCounts, zNames, activeTotal);
