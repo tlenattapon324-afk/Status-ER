@@ -8,29 +8,30 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* ── พื้นหลัง Dark Blue + ตัวอักษรโทนนีออน — ธีม "เทคโนโลยีแห่งอนาคต"
-     เลือกโทนอื่นได้จากแผงตั้งค่า ⚙ ของหน้านี้ ── */
-  --bg:        #0e2043;  /* Dark Blue เข้มจัด */
-  --panel-dk:  rgba(3,16,36,.55);   /* แผ่นเข้มลอยทับพื้นฟ้า (header/footer/thead) */
-  --surface:   rgba(255,255,255,.10);
-  --surface-2: rgba(255,255,255,.14);
-  --surface-3: rgba(255,255,255,.19);
-  --border:    rgba(255,255,255,.20);
-  --border-2:  rgba(255,255,255,.32);
-  --cyan:      #38e2ff;  /* Neon Cyan / Electric Blue — สีเส้น/ลวดลายหลัก */
+  /* ── พื้นหลังสว่าง โทนครีม/ขาวอมฟ้า แบบ "คอร์ปอเรตเทคโนโลยีแห่งอนาคต" (เส้น/จุดฟ้าอ่อนบางๆ)
+     เลือกโทนอื่นได้จากแผงตั้งค่า ⚙ ของหน้านี้ — ตัวอักษร/เส้นขอบด้านล่างปรับเป็นชุดสำหรับพื้นสว่างด้วย ── */
+  --bg:        #f5f2ec;  /* ครีมอมขาวอุ่นๆ */
+  --panel-dk:  rgba(255,255,255,.68);   /* แผ่นกระจกสว่างลอยทับ (header/footer) */
+  --surface:   rgba(15,23,42,.035);
+  --surface-2: rgba(15,23,42,.06);
+  --surface-3: rgba(15,23,42,.09);
+  --border:    rgba(15,23,42,.12);
+  --border-2:  rgba(15,23,42,.20);
+  --cyan:      #38e2ff;  /* ใช้เป็นเส้น/แสงตกแต่งบางๆ เท่านั้น (คอนทราสต์ต่ำบนพื้นสว่าง ไม่ใช้เป็นตัวอักษร) */
   --blue:      #60a5fa;
   --violet:    #a78bfa;
-  --teal:      #2dd4bf;  /* Bright Teal / Electric Aqua — สีรองเสริม */
-  --amber:     #fbbf24;  /* Glowing Amber / Neon Gold — จุดเน้นคอนทราสต์ */
-  --text:      #baf8ff;  /* ตัวอักษรหลัก — ฟ้าอมขาวเรืองแสง (นีออน) */
-  --text-dim:  #7fd4f0;  /* ตัวอักษรรอง — ฟ้านีออนหรี่ลง */
-  --text-faint:#5aa8d6;  /* ตัวอักษรจาง — ฟ้านีออนหม่น */
-  --good:      #34d399;
-  --warn:      #fbbf24;
-  --bad:       #fb7185;
+  --teal:      #2dd4bf;  /* เส้นตกแต่งรองเช่นกัน */
+  --amber:     #fbbf24;  /* ใช้เป็น glow/เอฟเฟกต์ตกแต่งเท่านั้น — ตัวอักษรจริงใช้สีเข้มกว่านี้แยกไว้ */
+  --accent-text:#0369a1;  /* ฟ้าเข้มอ่านง่าย — ใช้แทน --cyan ทุกจุดที่เป็นตัวอักษร/ไอคอนบนพื้นสว่าง */
+  --text:      #0f1f3d;  /* ตัวอักษรหลัก — กรมท่าเข้ม อ่านง่ายบนพื้นสว่าง */
+  --text-dim:  #3a5278;  /* ตัวอักษรรอง */
+  --text-faint:#6b84a8;  /* ตัวอักษรจาง */
+  --good:      #047857;
+  --warn:      #b45309;
+  --bad:       #be123c;
   --hdr-font:  .72rem;   /* ปรับได้จากแผงตั้งค่า ⚙ ของหน้านี้ */
   --data-font: .98rem;
-  --bg-glow:   #1244a5;  /* สีกลางจอที่สว่างกว่า --bg (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
+  --bg-glow:   #faf9f6;  /* สีกลางจอที่สว่างกว่า --bg เล็กน้อย (คำนวณใหม่อัตโนมัติด้วย JS เมื่อเปลี่ยนสีพื้นหลัง) */
 }
 
 html, body {
@@ -118,14 +119,14 @@ body {
   text-decoration: none; margin-bottom: 4px; cursor: pointer;
   transition: color .15s;
 }
-.back-btn:hover { color: var(--cyan); }
+.back-btn:hover { color: var(--accent-text); }
 .hdr-name-row { display: flex; align-items: center; gap: 10px; }
 #hdrHosp { font-size: 1.42rem; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -.01em; }
 .live-chip {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: .65rem; font-weight: 800; letter-spacing: .08em;
-  color: var(--good); background: rgba(52,211,153,.12);
-  border: 1px solid rgba(52,211,153,.30);
+  color: var(--good); background: rgba(4,120,87,.10);
+  border: 1px solid rgba(4,120,87,.28);
   border-radius: 999px; padding: 2px 9px 2px 7px;
 }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); animation: livepulse 1.6s infinite; }
@@ -153,11 +154,11 @@ body {
 @keyframes totalRingSpin { to { transform: rotate(360deg); } }
 #totalBadgeInner {
   position: absolute; inset: 9px; border-radius: 50%;
-  background: rgba(3,10,24,.82);
+  background: var(--bg);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-#totalNum { font-size: 1.95rem; font-weight: 900; line-height: 1; color: var(--cyan);
-            text-shadow: 0 0 18px rgba(56,226,255,.65); font-variant-numeric: tabular-nums; }
+#totalNum { font-size: 1.95rem; font-weight: 900; line-height: 1; color: var(--accent-text);
+            font-variant-numeric: tabular-nums; }
 #totalLbl { font-size: .62rem; font-weight: 800; color: var(--text-dim); margin-top: 2px; }
 
 .hdr-right { text-align: right; flex-shrink: 0; }
@@ -215,6 +216,7 @@ body {
   padding: 3px 10px; border-radius: 7px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 100%;
+  border: 1px solid rgba(15,23,42,.10);
 }
 .zc-count {
   font-size: 2.1rem; font-weight: 900; line-height: 1; color: var(--text);
@@ -253,7 +255,7 @@ body {
 table { width: 100%; border-collapse: collapse; }
 thead th {
   position: sticky; top: 0; z-index: 2;
-  background: rgba(4,20,44,.95);
+  background: rgba(241,238,231,.95);
   backdrop-filter: blur(8px);
   color: var(--text-faint);
   font-size: var(--hdr-font); font-weight: 800;
@@ -281,7 +283,7 @@ tbody tr:hover td { background: var(--surface-2); }
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.05em; line-height: 1;
-  border: 2px solid rgba(255,255,255,.14);
+  border: 2px solid rgba(15,23,42,.12);
 }
 .td-name  { font-weight: 700; }
 
@@ -292,6 +294,7 @@ tbody tr:hover td { background: var(--surface-2); }
   padding: 4px 12px; border-radius: 999px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   vertical-align: middle;
+  border: 1px solid rgba(15,23,42,.10); /* กันโซนสีอ่อน (เช่นโซนขาว) จมไปกับพื้นหลังสว่าง */
 }
 .status-cell {
   display: flex; align-items: center; gap: 7px;
@@ -354,10 +357,10 @@ tbody tr:hover td { background: var(--surface-2); }
   border-radius: 999px; padding: 4px 12px;
 }
 #ftLeft  { display:flex; align-items:center; gap:10px; }
-#ftLeave { color: var(--good); border-color: rgba(52,211,153,.25); background: rgba(52,211,153,.08); display:none; }
+#ftLeave { color: var(--good); border-color: rgba(4,120,87,.25); background: rgba(4,120,87,.08); display:none; }
 /* จุดเน้นคอนทราสต์สีเหลืองทอง/amber — ให้ตานำไปจับที่ตัวนับถอยหลังรีเฟรช ตัดกับโทนฟ้า-ไซแอนที่เหลือทั้งจอ */
 #ftCd {
-  color: var(--amber); background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.30);
+  color: #92400e; background: rgba(180,83,9,.10); border-color: rgba(180,83,9,.28);
   font-variant-numeric: tabular-nums;
 }
 
@@ -767,7 +770,7 @@ function renderTable(rows) {
     const mins   = r.arrivalTs ? Math.round((now - r.arrivalTs) / 60000) : null;
     const over   = mins !== null && limit > 0 && mins > limit;
     const waitCol = mins === null ? 'var(--text-faint)' : (over ? 'var(--bad)' : 'var(--good)');
-    const waitBg  = mins === null ? 'var(--surface-2)' : (over ? 'rgba(248,113,113,.12)' : 'rgba(52,211,153,.12)');
+    const waitBg  = mins === null ? 'var(--surface-2)' : (over ? 'rgba(190,18,60,.10)' : 'rgba(4,120,87,.10)');
     return `
       <tr>
         <td class="td-time">${r.time}</td>
@@ -889,7 +892,7 @@ async function switchToClassic() {
    ═══════════════════════════════════════════════════════════════ */
 const S2_STORAGE_KEY = 'erStatus_screen2_v1';
 const DEFAULT_S2 = {
-  bgColor:     '#0e2043',
+  bgColor:     '#f5f2ec',
   zoneColors:  { ...DEFAULT_ZONE_COLOR },
   refreshSecs: 30,
   leaveGraceMin: 5,
@@ -913,7 +916,11 @@ const S2_SCROLL_OPTS = [
   { label:'ช้ามาก', val:6 }, { label:'ช้า', val:10 }, { label:'ปานกลาง', val:18 }, { label:'เร็ว', val:30 },
 ];
 const S2_BG_PRESETS = [
-  { hex:'#0e2043', label:'Dark Blue (แนะนำ)' },
+  { hex:'#f5f2ec', label:'ครีมสว่าง (แนะนำ)' },
+  { hex:'#eef3f9', label:'ฟ้าขาว' },
+  { hex:'#f1f5f9', label:'เทาอ่อน' },
+  { hex:'#ffffff', label:'ขาวล้วน' },
+  { hex:'#0e2043', label:'Dark Blue' },
   { hex:'#0f172a', label:'Slate' },
   { hex:'#0d1117', label:'GitHub Dark' },
   { hex:'#0c0a1d', label:'Midnight' },
@@ -996,7 +1003,12 @@ function hslToHex(h, s, l) {
 }
 function glowColor(hex) {
   const [h, s, l] = hexToHsl(hex);
-  /* บูสต์สว่างขึ้นกว่ารอบก่อน (ยังคงความสม่ำเสมอกลาง-ขอบ แค่ยกความสว่างรวมทั้งจอขึ้น) */
+  if (l >= 55) {
+    /* พื้นหลังโทนสว่าง (ธีมสว่าง) — glow แค่สว่าง/อุ่นกว่าเดิมนิดเดียว ห้ามใช้สูตรบูสต์ของธีมเข้ม
+       เพราะ L ชนเพดานแล้วจะกลับไปทำให้ "จุดกลางจอ" มืดกว่าขอบ ซึ่งตรงข้ามกับที่ต้องการ */
+    return hslToHex(h, Math.max(0, s-6), Math.min(98, l+3));
+  }
+  /* พื้นหลังโทนเข้ม — บูสต์ความสว่าง/ความสดขึ้นให้เป็นจุด glow กลางจอ */
   return hslToHex(h, Math.min(80, s+18), Math.min(46, l+20));
 }
 
