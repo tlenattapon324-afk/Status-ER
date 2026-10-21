@@ -412,6 +412,14 @@ tbody tr:hover td { background: var(--surface-2); }
 }
 .s2-fnt-btn:hover { border-color: var(--border-2); background: var(--surface-2); }
 .s2-fnt-val { flex: 1; text-align: center; font-weight: 900; color: var(--text); }
+.s2-font-item {
+  display: block; width: 100%; text-align: left; padding: 7px 10px; font-size: .82rem;
+  background: none; border: none; border-bottom: 1px solid var(--border); cursor: pointer;
+  color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.s2-font-item:last-child { border-bottom: none; }
+.s2-font-item:hover  { background: var(--surface); color: var(--text); }
+.s2-font-item.active { background: rgba(56,226,255,.14); color: var(--cyan); font-weight: 700; }
 .s2-color-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 10px; border-radius: 10px; background: var(--surface); margin-bottom: 7px;
@@ -433,6 +441,7 @@ tbody tr:hover td { background: var(--surface-2); }
 .s2-btn-reset:hover { border-color: var(--border-2); color: var(--text-dim); }
 .s2-foot { padding: 10px 18px; border-top: 1px solid var(--border); text-align: center; font-size: .68rem; color: var(--text-faint); flex-shrink: 0; }
 </style>
+<style id="s2FontStyle"></style>
 </head>
 <body>
 
@@ -594,6 +603,21 @@ tbody tr:hover td { background: var(--surface-2); }
         <div class="s2-fnt-val"><span id="s2DataFontVal">16</span><span style="font-size:.7rem;color:var(--text-faint)"> px</span></div>
         <button class="s2-fnt-btn" onclick="s2AdjustFont('data',1)">+</button>
       </div>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="s2-sec-title" style="margin-bottom:0">🔤 ฟ้อนต์ตัวอักษร</div>
+        <button onclick="s2RefreshFonts()" style="font-size:.7rem;color:var(--cyan);background:none;border:none;cursor:pointer;font-weight:700">⟳ โหลดใหม่</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-faint);margin-bottom:8px">
+        กำลังใช้: <span id="s2CurrentFontLabel" style="color:var(--text);font-weight:700">Segoe UI</span>
+      </div>
+      <input type="text" id="s2FontSearch" placeholder="🔍 ค้นหาฟ้อนต์..." oninput="s2FilterFonts(this.value)"
+             style="width:100%;padding:8px 10px;font-size:.8rem;border-radius:9px;border:1.5px solid var(--border);
+                    background:var(--surface);color:var(--text);margin-bottom:8px" />
+      <div id="s2FontList" style="max-height:180px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)"></div>
+      <div id="s2FontLoadStatus" style="font-size:.68rem;color:var(--text-faint);margin-top:6px;text-align:center"></div>
     </div>
 
     <div>
@@ -900,7 +924,22 @@ const DEFAULT_S2 = {
   showSide:    true,
   hdrFontPx:   12,
   dataFontPx:  16,
+  selectedFont:'Segoe UI',
 };
+/* ฟ้อนต์สำรองใช้เมื่อเบราว์เซอร์ไม่รองรับ Local Font Access API (เช่น Firefox) — รายการเดียวกับหน้าจอมาตรฐาน */
+const S2_FALLBACK_FONTS = [
+  'Segoe UI','Segoe UI Variable','Tahoma','Arial','Verdana','Calibri','Cambria',
+  'Century Gothic','Trebuchet MS','Georgia','Times New Roman',
+  'Consolas','Courier New','Lucida Console','Cascadia Code',
+  'Angsana New','Angsana UPC','Browallia New','Browallia UPC',
+  'Cordia New','Cordia UPC','DilleniaUPC','EucrosiaUPC',
+  'FreesiaUPC','IrisUPC','JasmineUPC','KodchiangUPC',
+  'Leelawadee','Leelawadee UI','Leelawadee UI Semilight','LilyUPC',
+  'Noto Sans Thai','Noto Sans Thai UI',
+  'Sarabun','Prompt','Kanit','Mitr','Itim','Charm','Pridi',
+  'IBM Plex Sans Thai','IBM Plex Sans Thai Looped',
+  'Chonburi','Chakra Petch','K2D','Taviraj',
+].sort();
 const S2_REFRESH_OPTS = [
   { label:'15 วิ.',  val:15  }, { label:'30 วิ.',  val:30  }, { label:'1 นาที', val:60  },
   { label:'2 นาที', val:120 }, { label:'5 นาที', val:300 }, { label:'ปิด',    val:0   },
@@ -935,12 +974,14 @@ let showSide    = DEFAULT_S2.showSide;
 let hdrFontPx   = DEFAULT_S2.hdrFontPx;
 let dataFontPx  = DEFAULT_S2.dataFontPx;
 let bgColor     = DEFAULT_S2.bgColor;
+let selectedFont = DEFAULT_S2.selectedFont;
+let s2SystemFonts = [];
 
 function s2CurrentObj() {
   return {
     bgColor, zoneColors: { ...ZONE_COLOR }, refreshSecs: REFRESH,
     leaveGraceMin, leaveInstant, maskFirst, maskLast,
-    scrollSpeed, showSide, hdrFontPx, dataFontPx,
+    scrollSpeed, showSide, hdrFontPx, dataFontPx, selectedFont,
   };
 }
 
@@ -958,6 +999,7 @@ function s2ApplyObj(s) {
   if (s.showSide !== undefined)       showSide = s.showSide;
   if (s.hdrFontPx !== undefined)      hdrFontPx = s.hdrFontPx;
   if (s.dataFontPx !== undefined)     dataFontPx = s.dataFontPx;
+  if (s.selectedFont)                 selectedFont = s.selectedFont;
   s2ApplyToDom();
 }
 
@@ -1007,6 +1049,7 @@ function s2ApplyToDom() {
   document.documentElement.style.setProperty('--data-font', dataFontPx + 'px');
   document.getElementById('main').style.gridTemplateColumns = showSide ? '1fr 300px' : '1fr';
   document.getElementById('side').style.display = showSide ? '' : 'none';
+  s2ApplyFont();
 }
 
 function s2SaveLocal() {
@@ -1054,11 +1097,76 @@ function s2ResetAll() {
   rerenderAll();
 }
 
+/* ═══════════════════════ FONT FAMILY (หน้าจอนี้) ══════════════════════
+   ดึงรายชื่อฟ้อนต์จาก Windows ผ่าน Local Font Access API (เหมือนหน้าจอมาตรฐาน)
+   แคชไว้ใน localStorage key เดียวกัน ('erStatus_fonts') เพราะเป็นฟ้อนต์ของเครื่องเดียวกัน
+   ไม่ต้องขอสิทธิ์/โหลดซ้ำ ส่วนฟ้อนต์ที่ "เลือกไว้ใช้งาน" เก็บแยกเป็นของหน้าจอนี้เอง (selectedFont) ── */
+async function s2LoadSystemFonts() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('erStatus_fonts') || '[]');
+    if (cached.length > 0) { s2SystemFonts = cached; return; }
+  } catch {}
+  if (typeof window.queryLocalFonts === 'function') {
+    try {
+      const list = await window.queryLocalFonts();
+      s2SystemFonts = [...new Set(list.map(f => f.family))].sort();
+      localStorage.setItem('erStatus_fonts', JSON.stringify(s2SystemFonts));
+      return;
+    } catch (e) { console.warn('[Font] queryLocalFonts:', e.message); }
+  }
+  s2SystemFonts = [...S2_FALLBACK_FONTS];
+}
+function s2ApplyFont() {
+  document.getElementById('s2FontStyle').textContent =
+    `body { font-family: '${selectedFont}', 'Noto Sans Thai', 'Segoe UI', sans-serif; }`;
+  const lbl = document.getElementById('s2CurrentFontLabel');
+  if (lbl) lbl.textContent = selectedFont;
+}
+function s2RenderFontList(filter = '') {
+  const list = document.getElementById('s2FontList');
+  if (!list) return;
+  const q = filter.toLowerCase();
+  const items = s2SystemFonts.filter(f => f.toLowerCase().includes(q));
+  list.innerHTML = items.slice(0, 200).map(f => {
+    const esc = f.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const active = f === selectedFont;
+    return `<button class="s2-font-item ${active?'active':''}" onclick="s2SelectFont('${esc}')"
+              title="${f}" style="font-family:'${f}',sans-serif">${f}</button>`;
+  }).join('');
+  if (items.length > 200) {
+    list.innerHTML += `<div style="padding:7px 10px;font-size:.68rem;color:var(--text-faint);text-align:center">
+      แสดง 200 จาก ${items.length} ฟ้อนต์ — พิมพ์ค้นหาเพื่อกรอง</div>`;
+  }
+}
+function s2FilterFonts(q) { s2RenderFontList(q); }
+function s2SelectFont(family) {
+  selectedFont = family;
+  s2ApplyFont();
+  s2SaveLocal();
+  s2RenderFontList(document.getElementById('s2FontSearch')?.value || '');
+}
+async function s2LoadAndRenderFonts() {
+  const status = document.getElementById('s2FontLoadStatus');
+  if (status) status.textContent = '⏳ กำลังโหลดรายการฟ้อนต์...';
+  if (s2SystemFonts.length === 0) await s2LoadSystemFonts();
+  s2RenderFontList(document.getElementById('s2FontSearch')?.value || '');
+  if (status) {
+    const src = typeof window.queryLocalFonts === 'function' ? 'จาก Windows' : 'รายการสำเร็จรูป';
+    status.textContent = `พบ ${s2SystemFonts.length} ฟ้อนต์ (${src})`;
+  }
+}
+async function s2RefreshFonts() {
+  s2SystemFonts = [];
+  localStorage.removeItem('erStatus_fonts');
+  await s2LoadAndRenderFonts();
+}
+
 /* ── Panel open/close ── */
 function openS2Settings() {
   document.getElementById('s2Panel').classList.add('open');
   document.getElementById('s2Overlay').classList.add('open');
   s2RenderPanelState();
+  s2LoadAndRenderFonts();
 }
 function closeS2Settings() {
   document.getElementById('s2Panel').classList.remove('open');
