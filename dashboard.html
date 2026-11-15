@@ -518,6 +518,23 @@
 /* ── Auto redirect file:// → http:// ── */
 (function(){ if(location.protocol==='file:') location.replace('http://localhost:4000/dashboard.html'); })();
 
+/* ═══════════════════════ SERVER TIME SYNC ═══════════════════════
+   กันกรณีเครื่อง client (เช่นกล่อง Android TV) ไม่ได้ต่ออินเทอร์เน็ต นาฬิกาเครื่องเลย
+   ไม่ถูกซิงค์ NTP เอง ตรงนี้ขอเวลาปัจจุบันจาก server (ที่เชื่อถือได้กว่า) มาแทน แล้วคำนวณ
+   "ส่วนต่าง" ไว้ใช้บวกกับนาฬิกาเครื่องตัวเองตลอด — ไม่ต้องเปลี่ยนนาฬิกา OS ของเครื่อง client เลย ── */
+let timeOffsetMs = 0;
+async function syncServerTime() {
+  try {
+    const t0 = Date.now();
+    const resp = await fetch('/api/time', { cache: 'no-store' });
+    const json = await resp.json();
+    const t1 = Date.now();
+    if (json.ok) timeOffsetMs = (json.now + (t1 - t0) / 2) - t1; // ชดเชยเวลาที่ fetch ใช้ไปครึ่งหนึ่ง
+  } catch { /* เรียก server ไม่ได้ (เช่นตอนเพิ่งเปิดเครื่อง) — ใช้นาฬิกาเครื่องเองไปก่อน */ }
+}
+const nowMs   = () => Date.now() + timeOffsetMs;
+const nowDate = () => new Date(nowMs());
+
 /* ═══════════════════════ CONSTANTS ═════════════════════════════ */
 
 const DEFAULT_COLORS         = { 1:'#ef4444', 2:'#f472b6', 3:'#facc15', 4:'#4ade80', 5:'#94a3b8' };
@@ -710,13 +727,13 @@ function genderIcon(name) {
 
 /* ── Map API row → patient ── */
 function mapApiData(rows) {
-  const now    = Date.now();
+  const now    = nowMs();
   const seenIds = new Set();
 
   const mapped = rows.map((row, idx) => {
     const timeStr = (row.enter_time||'00:00:00').toString().split('T').pop().split('.')[0];
     const [h,m,s] = timeStr.split(':').map(Number);
-    const ts = new Date();
+    const ts = nowDate();
     ts.setHours(h||0, m||0, s||0, 0);
     const lv      = Math.min(Math.max(parseInt(row.triage_level)||5, 1), 5);
     const hn      = String(row.hn||'').replace(/\s/g,'');
@@ -770,7 +787,7 @@ async function initialFetch() {
     lastError   = null; lastErrType = null;
     stopAutoRetry();
     if (json.hospitalName) document.getElementById('hospitalName').textContent = json.hospitalName;
-    setApiState('ok', `${json.count} ราย · ${new Date().toLocaleTimeString('th-TH')}`);
+    setApiState('ok', `${json.count} ราย · ${nowDate().toLocaleTimeString('th-TH')}`);
   } catch(err) {
     lastError   = err.message;
     lastErrType = err.errType || (err instanceof TypeError ? 'network' : 'dberror');
@@ -801,7 +818,7 @@ async function backgroundFetch() {
     pendingData = json;
     lastError = null; lastErrType = null;
     stopAutoRetry();
-    setApiState('ok', `${json.count} ราย · ${new Date().toLocaleTimeString('th-TH')}`);
+    setApiState('ok', `${json.count} ราย · ${nowDate().toLocaleTimeString('th-TH')}`);
   } catch(err) {
     lastError   = err.message;
     lastErrType = err instanceof TypeError ? 'network' : 'dberror';
@@ -1124,7 +1141,7 @@ function syncFontUI() {
 /* ═══════════════════════ CLOCK ═════════════════════════════════ */
 
 function updateClock() {
-  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  const d=nowDate(), p=n=>String(n).padStart(2,'0');
   document.getElementById('clock').textContent=`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   const days=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
   const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -1162,7 +1179,7 @@ function renderSummary() {
 
 /* ═══════════════════════ WAIT TIME ═════════════════════════════ */
 
-const waitMins = p => Math.floor((Date.now()-p.arrivalTs)/60000);
+const waitMins = p => Math.floor((nowMs()-p.arrivalTs)/60000);
 function waitCls(mins,lv) {
   const max=TRIAGE[lv].maxWait;
   if (lv===1||mins>=max)   return 'wt-over font-black';
@@ -1231,7 +1248,7 @@ function renderList(resetScroll = true) {
   const activeCount=active.filter(p=>p.status!=='discharged').length;
   document.getElementById('totalCount').textContent=
     `รวมคนไข้ ${activeCount} ราย${leaving.length?` · กำลังออก ${leaving.length} ราย`:''}  (ทั้งหมด ${patients.length} ราย)`;
-  const d=new Date(), pad=n=>String(n).padStart(2,'0');
+  const d=nowDate(), pad=n=>String(n).padStart(2,'0');
   if(lu) lu.textContent=`อัปเดต ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
   if (maxRows) setTimeout(applyMaxRows, 30);
@@ -1788,6 +1805,8 @@ async function refreshFonts() {
 function render() { initialFetch(); }
 
 (async () => {
+  await syncServerTime();
+  setInterval(syncServerTime, 5 * 60 * 1000); /* ซิงค์ซ้ำทุก 5 นาที กันนาฬิกาเครื่อง client เพี้ยนไปเรื่อยๆ */
   await loadSettings();
   applyColors();
   applyFont();

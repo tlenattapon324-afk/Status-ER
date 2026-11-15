@@ -291,6 +291,13 @@ app.post('/api/officer-login', async (req, res) => {
   }
 });
 
+/* ── GET  /api/time — เวลาเครื่อง server ให้ client ใช้ซิงค์นาฬิกา
+   ใช้แก้ปัญหาเครื่อง client (เช่นกล่อง Android TV) ไม่ได้ต่อเน็ต นาฬิกาเลยไม่ซิงค์ NTP เอง
+   ไม่ต้องใช้ API token เพราะไม่ใช่ข้อมูลผู้ป่วย และ client ต้องเรียกได้ก่อนรู้ว่ามี token ไหม ── */
+app.get('/api/time', (req, res) => {
+  res.json({ ok: true, now: Date.now() });
+});
+
 /* ── GET  /api/status — server health check ── */
 app.get('/api/status', (req, res) => {
   const cfg = loadConfig();

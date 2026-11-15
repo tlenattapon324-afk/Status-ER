@@ -251,6 +251,23 @@ body {
 </div>
 
 <script>
+/* ═══════════ SERVER TIME SYNC ═══════════
+   กันกรณีเครื่อง client (เช่นกล่อง Android TV) ไม่ได้ต่ออินเทอร์เน็ต นาฬิกาเครื่องเลยไม่ถูก
+   ซิงค์ NTP เอง — ขอเวลาปัจจุบันจาก server มาคำนวณส่วนต่าง แล้วใช้ nowMs()/nowDate() แทน
+   Date.now()/new Date() ทุกจุดที่ต้องใช้ "เวลาปัจจุบัน" ── */
+let timeOffsetMs = 0;
+async function syncServerTime() {
+  try {
+    const t0 = Date.now();
+    const resp = await fetch('/api/time', { cache: 'no-store' });
+    const json = await resp.json();
+    const t1 = Date.now();
+    if (json.ok) timeOffsetMs = (json.now + (t1 - t0) / 2) - t1;
+  } catch {}
+}
+const nowMs   = () => Date.now() + timeOffsetMs;
+const nowDate = () => new Date(nowMs());
+
 /* ═══════════ CONFIG ═══════════ */
 const ZONE = {
   1: { name:'โซนแดง',    eng:'Resuscitation', icon:'🔴', color:'#ef4444' },
@@ -296,7 +313,7 @@ const TH_DAYS   = ['อาทิตย์','จันทร์','อังคา
 const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
 function tick() {
-  const d = new Date();
+  const d = nowDate();
   document.getElementById('clock').textContent =
     `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   document.getElementById('dateStr').textContent =
@@ -354,7 +371,7 @@ function renderStatusList(sCounts) {
 /* ═══════════ WAIT LIST ═══════════ */
 function renderWaitList(patients) {
   const zWaits = { 1:[], 2:[], 3:[], 4:[], 5:[] };
-  const now = Date.now();
+  const now = nowMs();
   patients.forEach(p => {
     if (p.arrivalTs) {
       const mins = Math.round((now - p.arrivalTs) / 60000);
@@ -431,7 +448,7 @@ async function load() {
 
       const ts = (row.enter_time||'').toString().split('T').pop().split('.')[0];
       const [h,m,s] = ts.split(':').map(Number);
-      const d = new Date(); d.setHours(h||0, m||0, s||0, 0);
+      const d = nowDate(); d.setHours(h||0, m||0, s||0, 0);
       patients.push({ lv, arrivalTs: d.getTime() });
     });
 
@@ -450,7 +467,7 @@ async function load() {
     } else {
       leaveEl.style.display = 'none';
     }
-    const now = new Date();
+    const now = nowDate();
     document.getElementById('ftUpdate').textContent =
       `อัปเดต ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   } catch(e) {
@@ -468,8 +485,12 @@ function startCd() {
   }, 1000);
 }
 
-load();
-startCd();
+(async () => {
+  await syncServerTime();
+  setInterval(syncServerTime, 5 * 60 * 1000); /* ซิงค์ซ้ำทุก 5 นาที กันนาฬิกาเครื่อง client เพี้ยนไปเรื่อยๆ */
+  load();
+  startCd();
+})();
 
 /* ── กันจอดับเวลาเปิดหน้านี้ค้างไว้นานๆ (เช่น จอทีวี/กล่อง Android) ── */
 (function keepScreenAwake() {

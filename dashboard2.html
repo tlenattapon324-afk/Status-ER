@@ -609,6 +609,23 @@ tbody tr:hover td { background: var(--surface-2); }
 </aside>
 
 <script>
+/* ═══════════ SERVER TIME SYNC ═══════════
+   กันกรณีเครื่อง client (เช่นกล่อง Android TV) ไม่ได้ต่ออินเทอร์เน็ต นาฬิกาเครื่องเลยไม่ถูก
+   ซิงค์ NTP เอง — ขอเวลาปัจจุบันจาก server มาคำนวณส่วนต่าง แล้วใช้ nowMs()/nowDate() แทน
+   Date.now()/new Date() ทุกจุดที่ต้องใช้ "เวลาปัจจุบัน" ── */
+let timeOffsetMs = 0;
+async function syncServerTime() {
+  try {
+    const t0 = Date.now();
+    const resp = await fetch('/api/time', { cache: 'no-store' });
+    const json = await resp.json();
+    const t1 = Date.now();
+    if (json.ok) timeOffsetMs = (json.now + (t1 - t0) / 2) - t1;
+  } catch {}
+}
+const nowMs   = () => Date.now() + timeOffsetMs;
+const nowDate = () => new Date(nowMs());
+
 /* ═══════════ CONFIG ═══════════
    ชื่อ/สีสำรอง ใช้ตอนฐานข้อมูลไม่มีชื่อโซน (er_emergency_type.name) ── */
 const ZONE_FALLBACK = {
@@ -684,7 +701,7 @@ const pad = n => String(n).padStart(2,'0');
 const TH_DAYS   = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function tick() {
-  const d = new Date();
+  const d = nowDate();
   document.getElementById('clock').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   document.getElementById('dateStr').textContent =
     `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear()+543}`;
@@ -745,7 +762,7 @@ function renderTable(rows) {
     return;
   }
   empty.style.display = 'none';
-  const now = Date.now();
+  const now = nowMs();
   tbody.innerHTML = rows.map(r => {
     const color  = ZONE_COLOR[r.lv];
     const sk     = mapStatus(r.status);
@@ -1197,7 +1214,7 @@ async function load() {
     const sCounts = {};
     const rows = [];
     let leaveCount = 0;
-    const now = Date.now();
+    const now = nowMs();
     const seenIds = new Set();
 
     (json.data||[]).forEach(row => {
@@ -1226,7 +1243,7 @@ async function load() {
 
       const timeStr = (row.enter_time||'00:00:00').toString().split('T').pop().split('.')[0];
       const [h,m,s] = timeStr.split(':').map(Number);
-      const d = new Date(); d.setHours(h||0, m||0, s||0, 0);
+      const d = nowDate(); d.setHours(h||0, m||0, s||0, 0);
       const arrivalTs = d.getTime();
       const waitMin = Math.round((now - arrivalTs) / 60000);
       if (waitMin >= 0 && waitMin < 600) zWaits[lv].push(waitMin);
@@ -1265,7 +1282,7 @@ async function load() {
     } else {
       leaveEl.style.display = 'none';
     }
-    const now2 = new Date();
+    const now2 = nowDate();
     document.getElementById('ftUpdate').textContent =
       `🕐 อัปเดต ${pad(now2.getHours())}:${pad(now2.getMinutes())}:${pad(now2.getSeconds())}`;
   } catch(e) {
@@ -1284,6 +1301,8 @@ function startCd() {
 }
 
 (async function init() {
+  await syncServerTime();
+  setInterval(syncServerTime, 5 * 60 * 1000); /* ซิงค์ซ้ำทุก 5 นาที กันนาฬิกาเครื่อง client เพี้ยนไปเรื่อยๆ */
   await loadS2Settings();
   s2ApplyToDom();
   await load();
