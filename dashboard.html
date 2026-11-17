@@ -1304,7 +1304,7 @@ function patientRow(p, delay=0) {
           ? `<span style="background:rgba(34,197,94,.20);border:1.5px solid #22c55e;color:#22c55e;
                           padding:6px 16px;border-radius:8px;font-weight:800;
                           display:inline-block;white-space:nowrap">✅ ${p.rawStatus||'จำหน่าย'}</span>`
-          : `<span class="st-${p.status} px-4 py-1.5 rounded-lg font-bold inline-block whitespace-nowrap">${s.label}</span>`
+          : `<span class="st-${p.status} px-4 py-1.5 rounded-lg font-bold inline-block whitespace-nowrap">${p.rawStatus || s.label}</span>`
         }
       </td>
       <td style="text-align:center;white-space:nowrap">
